@@ -95,6 +95,7 @@ export class World {
   // True if at least `min` walkable tiles are 4-connected to (tx, ty).
   hasRoom(tx, ty, min) {
     if (this.tileAt(tx, ty).solid) return false;
+    if (min <= 1) return true;
     const seen = new Set([tx + ',' + ty]);
     const queue = [[tx, ty]];
     while (queue.length) {

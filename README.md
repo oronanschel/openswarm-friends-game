@@ -15,7 +15,7 @@ python3 -m http.server 8000
 # then open http://localhost:8000
 ```
 
-Move with WASD or the arrow keys. Water and trees block movement. Walk up to a villager to hear what they have to say. Walk over berries, stones and shells to collect them into the hotbar at the bottom-left. Press 1, 2 or 3 to craft the recipes listed at the top-left. Press E while talking to a villager to give them a Shell Necklace and make a friend. Make 5 friends to complete the game's goal.
+Move with WASD or the arrow keys. Water and trees block movement. Walk up to a villager to hear what they have to say. Walk over berries, stones and shells to collect them into the hotbar at the bottom-left. Press 1, 2 or 3 to craft the recipes listed at the top-left. Press E while talking to a villager to give them a Shell Necklace and make a friend. Make 5 friends to complete the game's goal. Shells wash up on the sandy beaches.
 
 With a stone axe in the inventory, press Space next to a tree to chop it down and open a path.
 

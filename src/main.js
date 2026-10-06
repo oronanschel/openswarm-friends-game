@@ -51,7 +51,7 @@ function draw() {
 
   npcs.draw(ctx);
   player.draw(ctx);
-  minimap.draw(ctx, canvas.width, player, npcs.all);
+  minimap.draw(ctx, viewW, dpr, player, npcs.all);
 }
 
 let last = performance.now();

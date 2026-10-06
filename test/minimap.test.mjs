@@ -29,7 +29,7 @@ const npcs = [
   { x: player.x + 5 * TILE, y: player.y - 3 * TILE }, // in range
   { x: player.x + 500 * TILE, y: player.y }, // out of range
 ];
-minimap.draw(ctx, 800, player, npcs);
+minimap.draw(ctx, 800, 2, player, npcs);
 
 // The terrain buffer holds one cell per tile, coloured like the world.
 assert.equal(bufferCtx.calls.length, 81 * 81);
@@ -37,8 +37,8 @@ const centre = bufferCtx.calls[40 * 81 + 40];
 assert.deepEqual(centre.args, [80, 80, 2, 2]);
 assert.equal(centre.fillStyle, world.tileAt(Math.floor(player.x / TILE), Math.floor(player.y / TILE)).color);
 
-// Drawn in screen space in the top-right corner.
-assert.deepEqual(ctx.calls[0], { name: 'setTransform', args: [1, 0, 0, 1, 0, 0], fillStyle: undefined });
+// Drawn in CSS pixels in the top-right corner, scaled by the device pixel ratio.
+assert.deepEqual(ctx.calls[0], { name: 'setTransform', args: [2, 0, 0, 2, 0, 0], fillStyle: undefined });
 const image = ctx.calls.find((call) => call.name === 'drawImage');
 assert.deepEqual(image.args.slice(1), [800 - 162 - 12, 12]);
 
@@ -50,10 +50,10 @@ assert.deepEqual(dots[1].args, [626 + 79, 12 + 79, 4, 4]);
 
 // The buffer is only repainted when the player changes tile.
 player.x += 1;
-minimap.draw(ctx, 800, player, npcs);
+minimap.draw(ctx, 800, 2, player, npcs);
 assert.equal(bufferCtx.calls.length, 81 * 81);
 player.x += TILE;
-minimap.draw(ctx, 800, player, npcs);
+minimap.draw(ctx, 800, 2, player, npcs);
 assert.equal(bufferCtx.calls.length, 2 * 81 * 81);
 
 console.log('ok');

@@ -1,5 +1,5 @@
 import { TILE } from './world.js';
-import { ItemById } from './items.js';
+import { RawItems } from './items.js';
 
 const REGION = 16; // tiles per side of a spawn region
 const LOAD_RADIUS = 2; // regions kept populated around the player
@@ -140,7 +140,7 @@ export class Npcs {
       const giftRandom = rng(
         Math.imul(rx, 2654435761) ^ Math.imul(ry, 40503) ^ Math.imul(npcs.length + 1, 97) ^ Math.imul(this.world.seed, 2246822519)
       );
-      if (giftRandom() < GIFT_CHANCE) npc.gift = ItemById[Math.floor(giftRandom() * ItemById.length)];
+      if (giftRandom() < GIFT_CHANCE) npc.gift = RawItems[Math.floor(giftRandom() * RawItems.length)];
       npcs.push(npc);
     }
     return npcs;

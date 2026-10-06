@@ -12,10 +12,17 @@ export const ItemTypes = {
   BERRY: { id: 0, name: 'Berry', color: '#c2185b' },
   STONE: { id: 1, name: 'Stone', color: '#9e9e9e' },
   SHELL: { id: 2, name: 'Shell', color: '#ffccbc' },
+  // Crafted only; see crafting.js.
+  AXE: { id: 3, name: 'Stone Axe', color: '#6d4c41' },
+  NECKLACE: { id: 4, name: 'Shell Necklace', color: '#f8bbd0' },
+  JAM: { id: 5, name: 'Berry Jam', color: '#7b1fa2' },
 };
 
 export const ItemById = [];
 for (const type of Object.values(ItemTypes)) ItemById[type.id] = type;
+
+// Items found in the world or given by NPCs (not crafted).
+export const RawItems = [ItemTypes.BERRY, ItemTypes.STONE, ItemTypes.SHELL];
 
 // Deterministic integer hash -> [0, 1); salted differently from world gen.
 function hash(x, y, seed) {

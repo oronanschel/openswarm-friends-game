@@ -65,6 +65,55 @@ const Art = new Map([
       ctx.strokeStyle = OUTLINE;
     },
   ],
+  [
+    'Berry Jam',
+    (ctx, x, y, colour) => {
+      ctx.fillStyle = colour; // jar of jam
+      ctx.fillRect(x - 4, y - 2, 8, 8);
+      ctx.strokeRect(x - 4, y - 2, 8, 8);
+      ctx.fillStyle = '#e0e0e0'; // lid
+      ctx.fillRect(x - 3, y - 5, 6, 3);
+      ctx.strokeRect(x - 3, y - 5, 6, 3);
+    },
+  ],
+  [
+    'Shell Necklace',
+    (ctx, x, y, colour) => {
+      ctx.beginPath(); // the string, a loop hanging from the top
+      ctx.arc(x, y - 2, 4, 0, Math.PI);
+      ctx.stroke();
+      for (const [dx, dy] of [[-4, -2], [-3, 2], [0, 3], [3, 2], [4, -2]]) {
+        ctx.fillStyle = colour;
+        ctx.beginPath();
+        ctx.arc(x + dx, y + dy, 1.5, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+      }
+    },
+  ],
+  [
+    'Stone Axe',
+    (ctx, x, y, colour) => {
+      ctx.fillStyle = colour; // wooden handle, running up to the right
+      ctx.beginPath();
+      ctx.moveTo(x - 4, y + 5);
+      ctx.lineTo(x - 2, y + 5);
+      ctx.lineTo(x + 3, y - 4);
+      ctx.lineTo(x + 1, y - 5);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = '#9e9e9e'; // stone head
+      ctx.beginPath();
+      ctx.moveTo(x - 1, y - 5);
+      ctx.lineTo(x + 5, y - 5);
+      ctx.lineTo(x + 5, y);
+      ctx.lineTo(x + 2, y - 1);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+    },
+  ],
 ]);
 
 // Draws one pickup centred at (x, y) in world pixels. Returns false, drawing

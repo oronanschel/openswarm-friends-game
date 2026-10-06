@@ -48,6 +48,24 @@ test('buttons sit on screen, do not overlap, and are found by position', () => {
   assert.equal(buttonAt(10, 10, VIEW.width, VIEW.height), null);
 });
 
+test('on a short window the buttons use two columns and stay below the minimap', () => {
+  const rects = buttonRects(640, 360);
+  assert.equal(new Set(rects.map((r) => r.x)).size, 2);
+  for (const r of rects) {
+    assert.ok(r.x >= 0 && r.x + r.w <= 640 && r.y + r.h <= 360);
+    // The minimap occupies y 12 to 174 at the top-right.
+    assert.ok(r.y >= 174, `button ${r.label} at y=${r.y}`);
+    assert.equal(buttonAt(r.x + 1, r.y + 1, 640, 360).code, r.code);
+  }
+  for (const a of rects) {
+    for (const b of rects) {
+      if (a !== b) assert.ok(a.x !== b.x || a.y !== b.y);
+    }
+  }
+  // The tall layout also clears the minimap from its threshold up.
+  assert.ok(buttonRects(360, 450).every((r) => r.y >= 174));
+});
+
 test('dragging holds arrow codes and lifting releases them', () => {
   const { controls, input, fire } = setup();
   fire('pointerdown', 1, 100, 300);

@@ -13,12 +13,15 @@ export const Buttons = [
   { label: '1', code: 'Digit1' },
 ];
 
-// Buttons stacked up the right edge, in CSS pixels.
+// Buttons stacked up the right edge, in CSS pixels. A single column of five
+// needs 450px of height to stay below the minimap; shorter windows (a phone on
+// its side) get columns of three.
 export function buttonRects(viewWidth, viewHeight) {
+  const rows = viewHeight < 450 ? 3 : Buttons.length;
   return Buttons.map((button, i) => ({
     ...button,
-    x: viewWidth - MARGIN - BUTTON,
-    y: viewHeight - MARGIN - BUTTON - i * (BUTTON + GAP),
+    x: viewWidth - MARGIN - BUTTON - Math.floor(i / rows) * (BUTTON + GAP),
+    y: viewHeight - MARGIN - BUTTON - (i % rows) * (BUTTON + GAP),
     w: BUTTON,
     h: BUTTON,
   }));

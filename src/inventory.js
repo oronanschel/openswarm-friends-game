@@ -17,8 +17,10 @@ export class Inventory {
     return this.counts.get(id) || 0;
   }
 
-  // Hotbar at the bottom-left, in CSS pixels; replaces the canvas transform.
+  // Hotbar at the bottom-left, in CSS pixels. All context state (transform,
+  // text alignment, alpha) is restored afterwards so it doesn't leak to callers.
   draw(ctx, viewHeight, dpr) {
+    ctx.save();
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     const top = viewHeight - SLOT - MARGIN;
     ctx.font = 'bold 12px sans-serif';
@@ -39,5 +41,6 @@ export class Inventory {
       ctx.fillStyle = '#fff';
       ctx.fillText(String(count), left + SLOT - 4, top + SLOT - 2);
     });
+    ctx.restore();
   }
 }

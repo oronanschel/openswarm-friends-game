@@ -9,7 +9,7 @@ import { Recipes, craft, alreadyHave, drawRecipes } from './crafting.js';
 import { Quest, GOAL } from './quest.js';
 import { save, load, clear } from './save.js';
 import { chop, treeInReach } from './chop.js';
-import { TouchControls } from './touch.js';
+import { TouchControls, buttonRects } from './touch.js';
 import { DayNight } from './daynight.js';
 import { Sound } from './sound.js';
 import { Help } from './help.js';
@@ -211,7 +211,7 @@ function draw() {
     hasAxe: inventory.count(ItemTypes.STONE_AXE.id) > 0,
     touch: touch.active,
   });
-  if (!help.visible) drawPrompt(ctx, action, viewW, viewH, dpr);
+  if (!help.visible) drawPrompt(ctx, action, viewW, viewH, dpr, touch.active ? buttonRects(viewW, viewH) : []);
   quest.draw(ctx, viewW, viewH, dpr);
   help.draw(ctx, viewW, viewH, dpr);
   // Last, so the buttons stay visible above the win banner and the help.

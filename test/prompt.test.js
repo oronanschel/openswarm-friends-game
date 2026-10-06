@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { promptFor, drawPrompt } from '../src/prompt.js';
 import { World, Tiles, TILE } from '../src/world.js';
 import { treeInReach } from '../src/chop.js';
+import { buttonRects } from '../src/touch.js';
 
 const stranger = { name: 'Mira', friend: false };
 const friend = { name: 'Mira', friend: true };
@@ -60,6 +61,31 @@ test('the prompt draws nothing when there is none and restores context state', (
   assert.equal(calls[0][0], 'save');
   assert.equal(calls.at(-1)[0], 'restore');
   assert.deepEqual(calls.filter((c) => c[0] === 'fillText').map((c) => c[1]), ['E', 'Give Mira a Shell Necklace']);
+});
+
+test('the prompt keeps clear of the touch buttons on a 320px phone', () => {
+  const prompt = { key: 'E', text: 'Give Mira a Shell Necklace' };
+  const pill = (avoid) => {
+    const calls = [];
+    drawPrompt(fakeCtx(calls), prompt, 320, 568, 1, avoid);
+    const [, x, y, w, h] = calls.find((c) => c[0] === 'fillRect');
+    return { x, y, w, h, calls };
+  };
+  const buttons = buttonRects(320, 568);
+  const free = pill([]);
+  const level = buttons.filter((r) => r.y < free.y + free.h && r.y + r.h > free.y);
+  assert.ok(level.some((r) => r.x < free.x + free.w), 'without care the pill would run under a button');
+  const clear = pill(buttons);
+  assert.ok(clear.x >= 12);
+  for (const r of level) assert.ok(clear.x + clear.w <= r.x, `${r.label} at ${r.x}, pill ends ${clear.x + clear.w}`);
+  // Both the key and the text are still drawn, the text squeezed into the pill.
+  const texts = clear.calls.filter((c) => c[0] === 'fillText');
+  assert.deepEqual(texts.map((c) => c[1]), ['E', prompt.text]);
+  assert.ok(texts[1][2] + texts[1][4] <= clear.x + clear.w);
+  // Buttons above or below the pill's line do not move it.
+  const away = pill(buttons.filter((r) => !level.includes(r)));
+  assert.equal(away.x, free.x);
+  assert.equal(away.w, free.w);
 });
 
 test('the prompt stays inside a narrow window, under the player', () => {

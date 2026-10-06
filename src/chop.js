@@ -13,7 +13,8 @@ export function chop(world, player, inventory, axe) {
   let bestDistance = REACH;
   for (let ty = pty - 2; ty <= pty + 2; ty++) {
     for (let tx = ptx - 2; tx <= ptx + 2; tx++) {
-      if (world.tileAt(tx, ty) !== Tiles.TREE) continue;
+      const tile = world.tileAt(tx, ty);
+      if (tile !== Tiles.TREE && tile !== Tiles.PINE) continue;
       const distance = Math.hypot((tx + 0.5) * TILE - player.x, (ty + 0.5) * TILE - player.y);
       if (distance <= bestDistance) {
         best = { tx, ty };

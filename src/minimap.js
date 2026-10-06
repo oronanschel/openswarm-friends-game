@@ -50,19 +50,28 @@ export class Minimap {
     ctx.imageSmoothingEnabled = false; // keep tiles crisp when the buffer is scaled up
     ctx.drawImage(this.buffer, left, top);
 
-    const dot = (entity, color) => {
+    // A square of `size` centred on a tile's cell; `outline` adds a dark 1px
+    // rim so light dots still show on snow.
+    const square = (dx, dy, size, color, outline) => {
+      const x = left + (dx + HALF) * SCALE + (SCALE - size) / 2;
+      const y = top + (dy + HALF) * SCALE + (SCALE - size) / 2;
+      if (outline) {
+        ctx.fillStyle = '#111';
+        ctx.fillRect(x - 1, y - 1, size + 2, size + 2);
+      }
+      ctx.fillStyle = color;
+      ctx.fillRect(x, y, size, size);
+    };
+    const dot = (entity, color, outline) => {
       const dx = Math.floor(entity.x / TILE) - tx;
       const dy = Math.floor(entity.y / TILE) - ty;
       if (Math.abs(dx) > HALF || Math.abs(dy) > HALF) return;
-      ctx.fillStyle = color;
-      ctx.fillRect(left + (dx + HALF) * SCALE, top + (dy + HALF) * SCALE, SCALE, SCALE);
+      square(dx, dy, SCALE, color, outline);
     };
     // Items first, so a villager standing on one stays visible.
-    for (const item of items) dot(item, item.type.color);
-    for (const npc of npcs) dot(npc, '#ffffff');
-
-    ctx.fillStyle = '#f2e14c';
-    ctx.fillRect(left + HALF * SCALE - 1, top + HALF * SCALE - 1, SCALE + 2, SCALE + 2);
+    for (const item of items) dot(item, item.type.color, false);
+    for (const npc of npcs) dot(npc, '#ffffff', true);
+    square(0, 0, SCALE + 2, '#f2e14c', true);
     ctx.strokeStyle = '#111';
     ctx.lineWidth = 2;
     ctx.strokeRect(left, top, SIZE, SIZE);

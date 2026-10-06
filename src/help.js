@@ -8,7 +8,8 @@ export const HelpLines = [
   'Trees give Wood; a Raft crosses water',
   'Make a friend: E, with a Shell Necklace',
   'Eat Berry Jam: F, for a speed boost',
-  'Mute: M      Start over: Shift+R',
+  'Mute: M      Dark mode: N',
+  'Start over: Shift+R',
   'Goal: make 5 friends',
 ];
 const TITLE = 'How to play';

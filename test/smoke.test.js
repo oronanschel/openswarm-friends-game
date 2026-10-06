@@ -349,6 +349,22 @@ test('a save from another world is ignored and the game starts fresh', async () 
   assert.deepEqual(broken.saved().inventory, []);
 });
 
+test('N turns dark mode on and off, and the choice is saved', async () => {
+  const game = await boot('dark', { width: 800, height: 600, dpr: 1, stored: { [HELP_KEY]: '1' } });
+  game.run(2);
+  game.fire('pagehide');
+  assert.equal(game.saved().dark, false);
+  game.key('KeyN');
+  game.release('KeyN');
+  game.run(3);
+  game.fire('pagehide');
+  assert.equal(game.saved().dark, true);
+  game.key('KeyN');
+  game.release('KeyN');
+  game.fire('pagehide');
+  assert.equal(game.saved().dark, false);
+});
+
 test('browser shortcuts are left alone: only a plain Shift+R wipes the save', async () => {
   const { JAM, BERRY } = ItemTypes;
   const game = await boot('shortcuts', {

@@ -21,7 +21,9 @@ With a stone axe in the inventory, press Space next to a tree to chop it down an
 
 The world has grassland and snow country; snowy regions grow pines, which block and chop like trees.
 
-On a touch screen, drag anywhere to walk and use the buttons at the bottom-right (Mute, 1, 2, 3, 4, Eat, E, Chop) in place of the keys. The ? button at the left, under the recipe list, shows or hides the controls panel.
+On a touch screen, drag anywhere to walk and use the buttons at the bottom-right (Mute, 1, 2, 3, 4, Eat, E, Chop) in place of the keys. The ? button at the left, under the recipe list, shows or hides the controls panel, and the Dark button beside it is the N key.
+
+Press N for dark mode: the world goes almost black, with a small flickering light around you, a low hum (it follows Mute), and a vignette. It is off by default and remembered in the save; the day and night cycle carries on underneath.
 
 Short synthesized sound effects play for pickups, chopping, eating and making friends; press M to mute or unmute them (remembered between visits).
 

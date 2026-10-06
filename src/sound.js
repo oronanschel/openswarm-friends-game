@@ -11,6 +11,7 @@ export const Effects = {
 };
 
 const VOLUME = 0.06;
+const DRONE_VOLUME = 0.05;
 
 // Tiny synthesized sound effects. The AudioContext is created on the first
 // play, which follows a key press or tap, so browsers allow it. Without
@@ -21,6 +22,8 @@ export class Sound {
     this.AudioCtx = AudioCtx;
     this.ctx = null;
     this.muted = false;
+    this.drone = null; // the eerie hum while dark mode is on
+    this.wantDrone = false;
     try {
       this.muted = storage?.getItem(KEY) === '1';
     } catch {
@@ -35,7 +38,46 @@ export class Sound {
     } catch {
       // The choice just won't persist.
     }
+    this.syncDrone();
     return this.muted;
+  }
+
+  // A low, wavering hum for dark mode; silent while muted.
+  setDrone(on) {
+    this.wantDrone = on;
+    this.syncDrone();
+  }
+
+  syncDrone() {
+    try {
+      if (this.wantDrone && !this.muted && this.AudioCtx) {
+        if (this.drone) return;
+        this.ctx ??= new this.AudioCtx();
+        if (this.ctx.state === 'suspended') this.ctx.resume();
+        const osc = this.ctx.createOscillator();
+        const lfo = this.ctx.createOscillator();
+        const lfoGain = this.ctx.createGain();
+        const gain = this.ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.value = 55;
+        lfo.frequency.value = 0.3;
+        lfoGain.gain.value = 6;
+        gain.gain.value = DRONE_VOLUME;
+        lfo.connect(lfoGain);
+        lfoGain.connect(osc.frequency);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start();
+        lfo.start();
+        this.drone = { osc, lfo };
+      } else if (this.drone) {
+        this.drone.osc.stop();
+        this.drone.lfo.stop();
+        this.drone = null;
+      }
+    } catch {
+      this.drone = null;
+    }
   }
 
   play(name) {
@@ -44,6 +86,8 @@ export class Sound {
     try {
       this.ctx ??= new this.AudioCtx();
       if (this.ctx.state === 'suspended') this.ctx.resume();
+      // A hum wanted before the first key press can only start now.
+      if (this.wantDrone) this.syncDrone();
       const now = this.ctx.currentTime;
       for (const [freq, start, length] of notes) {
         const osc = this.ctx.createOscillator();

@@ -232,7 +232,7 @@ test('drawing restores context state', () => {
   controls.draw(ctx, 360, 640, 2);
   assert.equal(calls[0].name, 'save');
   assert.equal(calls.at(-1).name, 'restore');
-  assert.equal(calls.filter((c) => c.name === 'fillText').length, Buttons.length + 1);
+  assert.equal(calls.filter((c) => c.name === 'fillText').length, Buttons.length + 2);
   // The knob is clamped to the ring: 48px right of where the finger went down.
   const knob = calls.filter((c) => c.name === 'arc').at(-1);
   assert.deepEqual(knob.args.slice(0, 2), [148, 300]);

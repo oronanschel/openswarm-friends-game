@@ -52,8 +52,11 @@ export function buttonRects(viewWidth, viewHeight) {
 // it cannot be hit by mistake. Its place does not depend on the view size.
 export const HelpButton = { label: '?', code: 'KeyH', x: MARGIN, y: RECIPES_BOTTOM + GAP, w: BUTTON, h: BUTTON };
 
+// The dark mode button sits beside it, for the same reasons.
+export const DarkButton = { label: 'Dark', code: 'KeyN', x: MARGIN + BUTTON + GAP, y: HelpButton.y, w: BUTTON, h: BUTTON };
+
 export function buttonAt(x, y, viewWidth, viewHeight) {
-  return [HelpButton, ...buttonRects(viewWidth, viewHeight)].find((r) => x >= r.x && x < r.x + r.w && y >= r.y && y < r.y + r.h) || null;
+  return [HelpButton, DarkButton,...buttonRects(viewWidth, viewHeight)].find((r) => x >= r.x && x < r.x + r.w && y >= r.y && y < r.y + r.h) || null;
 }
 
 // Arrow-key codes for a drag of (dx, dy) from where the finger went down:
@@ -128,7 +131,7 @@ export class TouchControls {
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.lineWidth = 1;
-    for (const r of [HelpButton, ...buttonRects(viewWidth, viewHeight)]) {
+    for (const r of [HelpButton, DarkButton, ...buttonRects(viewWidth, viewHeight)]) {
       ctx.fillStyle = 'rgba(0, 0, 0, 0.55)';
       ctx.fillRect(r.x, r.y, r.w, r.h);
       ctx.strokeStyle = '#ddd';

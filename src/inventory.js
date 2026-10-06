@@ -7,10 +7,12 @@ const MARGIN = 12;
 export class Inventory {
   constructor() {
     this.counts = new Map(); // item id -> count
+    this.onAdd = null; // optional (id, n) callback, e.g. for pickup messages
   }
 
   add(id, n = 1) {
     this.counts.set(id, this.count(id) + n);
+    if (this.onAdd) this.onAdd(id, n);
   }
 
   count(id) {

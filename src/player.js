@@ -14,6 +14,7 @@ export class Player {
     this.y = y;
     this.boost = 0; // seconds of speed boost left
     this.raft = false; // true while carrying a Raft: water does not block
+    this.sailing = false; // true while the player's centre is over water
     // The last direction moved, for the face; starts looking down the screen.
     this.faceX = 0;
     this.faceY = 1;
@@ -50,6 +51,9 @@ export class Player {
     // Move each axis separately so the player slides along walls.
     this.x = this.moveAxis(this.x, dx * speed * dt, (x) => this.collides(x, this.y, world));
     this.y = this.moveAxis(this.y, dy * speed * dt, (y) => this.collides(this.x, y, world));
+    // Fake worlds in tests may have no tiles; they are never water.
+    const tile = world.tileAt?.(Math.floor(this.x / TILE), Math.floor(this.y / TILE));
+    this.sailing = this.raft && tile === Tiles.WATER;
     return boosted && this.boost === 0;
   }
 
@@ -87,6 +91,20 @@ export class Player {
   }
 
   draw(ctx) {
+    if (this.sailing) {
+      // The raft the player stands on: planks a little wider than the body.
+      ctx.fillStyle = ItemTypes.RAFT.color;
+      ctx.fillRect(this.x - RADIUS - 3, this.y - RADIUS + 2, RADIUS * 2 + 6, RADIUS * 2);
+      ctx.strokeStyle = '#6d4c41';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(this.x - RADIUS - 3, this.y - RADIUS + 2, RADIUS * 2 + 6, RADIUS * 2);
+      for (const dx of [-3.5, 3.5]) {
+        ctx.beginPath();
+        ctx.moveTo(this.x + dx, this.y - RADIUS + 2);
+        ctx.lineTo(this.x + dx, this.y + RADIUS + 2);
+        ctx.stroke();
+      }
+    }
     ctx.fillStyle = '#f2e14c';
     ctx.beginPath();
     ctx.arc(this.x, this.y, RADIUS, 0, Math.PI * 2);

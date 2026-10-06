@@ -1,6 +1,7 @@
 import { World, TILE } from './world.js';
 import { Player } from './player.js';
 import { Npcs } from './npc.js';
+import { Minimap } from './minimap.js';
 
 const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
@@ -9,6 +10,7 @@ const world = new World(1337);
 const spawn = world.findSpawn();
 const player = new Player(spawn.x, spawn.y);
 const npcs = new Npcs(world);
+const minimap = new Minimap(world);
 
 const input = new Set();
 window.addEventListener('keydown', (e) => input.add(e.code));
@@ -40,6 +42,7 @@ function draw() {
 
   npcs.draw(ctx);
   player.draw(ctx);
+  minimap.draw(ctx, canvas.width, player, npcs.all);
 }
 
 let last = performance.now();

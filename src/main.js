@@ -5,7 +5,7 @@ import { Minimap } from './minimap.js';
 import { Items, ItemById, ItemTypes } from './items.js';
 import { Inventory } from './inventory.js';
 import { Toasts } from './toasts.js';
-import { Recipes, craft, drawRecipes } from './crafting.js';
+import { Recipes, craft, alreadyHave, drawRecipes } from './crafting.js';
 import { Quest, GOAL } from './quest.js';
 import { save, load, clear } from './save.js';
 import { chop, treeInReach } from './chop.js';
@@ -77,7 +77,10 @@ window.addEventListener('keydown', (e) => {
 window.addEventListener('keydown', (e) => {
   const recipe = Recipes.find((r) => r.key === e.code);
   if (!recipe || e.repeat) return;
-  if (!craft(inventory, recipe)) {
+  if (alreadyHave(inventory, recipe)) {
+    toasts.push('You already have a ' + recipe.output.name);
+    sound.play('nope');
+  } else if (!craft(inventory, recipe)) {
     toasts.push('Need ' + recipe.inputs.map(([type, n]) => n + ' ' + type.name).join(' + '));
     sound.play('nope');
   }

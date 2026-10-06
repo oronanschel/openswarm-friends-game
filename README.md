@@ -21,7 +21,7 @@ With a stone axe in the inventory, press Space next to a tree to chop it down an
 
 The world has grassland and snow country; snowy regions grow pines, which block and chop like trees.
 
-On a touch screen, drag anywhere to walk and use the buttons at the bottom-right (Mute, 1, 2, 3, Eat, E, Chop) in place of the keys.
+On a touch screen, drag anywhere to walk and use the buttons at the bottom-right (Mute, 1, 2, 3, 4, Eat, E, Chop) in place of the keys.
 
 Short synthesized sound effects play for pickups, chopping, eating and making friends; press M to mute or unmute them (remembered between visits).
 

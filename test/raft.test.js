@@ -4,7 +4,7 @@ import { World, Tiles, TILE } from '../src/world.js';
 import { Player, RADIUS } from '../src/player.js';
 import { Inventory } from '../src/inventory.js';
 import { ItemTypes } from '../src/items.js';
-import { Recipes, craft } from '../src/crafting.js';
+import { Recipes, craft, alreadyHave } from '../src/crafting.js';
 import { serialize, apply } from '../src/save.js';
 import { Npcs } from '../src/npc.js';
 import { Items } from '../src/items.js';
@@ -31,6 +31,54 @@ test('four crafts a raft from six wood', () => {
   assert.equal(craft(inventory, recipe), true);
   assert.equal(inventory.count(ItemTypes.WOOD.id), 0);
   assert.equal(inventory.count(ItemTypes.RAFT.id), 1);
+});
+
+test('a second raft is refused and the wood is kept', () => {
+  const recipe = Recipes.find((r) => r.key === 'Digit4');
+  const inventory = new Inventory();
+  inventory.add(ItemTypes.WOOD.id, 12);
+  assert.equal(alreadyHave(inventory, recipe), false);
+  assert.equal(craft(inventory, recipe), true);
+  assert.equal(alreadyHave(inventory, recipe), true);
+  assert.equal(craft(inventory, recipe), false);
+  assert.equal(inventory.count(ItemTypes.WOOD.id), 6);
+  assert.equal(inventory.count(ItemTypes.RAFT.id), 1);
+  // Ordinary recipes are not unique.
+  const jam = Recipes.find((r) => r.key === 'Digit3');
+  inventory.add(ItemTypes.BERRY.id, 6);
+  assert.equal(craft(inventory, jam), true);
+  assert.equal(craft(inventory, jam), true);
+});
+
+// Records the rectangles drawn; every other canvas method is a no-op.
+function rectsDrawn(player) {
+  const rects = [];
+  const ctx = new Proxy(
+    { fillRect: (...args) => rects.push(args), strokeRect: () => {} },
+    { get: (target, name) => (name in target ? target[name] : () => {}), set: () => true }
+  );
+  player.draw(ctx);
+  return rects;
+}
+
+test('a raft is drawn under the player only while on water with one', () => {
+  const player = new Player(TILE * 2.5, TILE / 2); // on the water tile
+  const inventory = new Inventory();
+  player.update(0, new Set(), world);
+  assert.equal(player.sailing, false);
+  const bare = rectsDrawn(player).length;
+
+  inventory.add(ItemTypes.RAFT.id);
+  player.sync(inventory);
+  player.update(0, new Set(), world);
+  assert.equal(player.sailing, true);
+  assert.equal(rectsDrawn(player).length, bare + 1);
+
+  // Back on land with the raft in the bag: nothing under the player.
+  player.x = TILE / 2;
+  player.update(0, new Set(), world);
+  assert.equal(player.sailing, false);
+  assert.equal(rectsDrawn(player).length, bare);
 });
 
 test('without a raft, water blocks the player', () => {

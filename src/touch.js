@@ -11,6 +11,7 @@ export const Buttons = [
   { label: 'Chop', code: 'Space' },
   { label: 'E', code: 'KeyE' },
   { label: 'Eat', code: 'KeyF' },
+  { label: '4', code: 'Digit4' },
   { label: '3', code: 'Digit3' },
   { label: '2', code: 'Digit2' },
   { label: '1', code: 'Digit1' },
@@ -21,9 +22,10 @@ const MINIMAP_BOTTOM = 174;
 const ROWS = [Buttons.length, 4, 3, 2];
 
 // Buttons stacked up the right edge, in CSS pixels, in the tallest columns that
-// stay below the minimap: one column of seven from 542px of height, columns of
+// stay below the minimap: one column of eight from 594px of height, columns of
 // four from 386px, then three (a phone on its side), then two. Where the
-// columns would reach the hotbar (a narrow window) the block sits above it.
+// columns would reach the hotbar (a narrow window) the block sits above it,
+// which takes up to 48px more height.
 export function buttonRects(viewWidth, viewHeight) {
   const hotbar = hotbarLayout(viewWidth);
   let rows;

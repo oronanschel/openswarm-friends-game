@@ -12,6 +12,7 @@ import { chop } from './chop.js';
 import { TouchControls } from './touch.js';
 import { DayNight } from './daynight.js';
 import { Sound } from './sound.js';
+import { baseColor, hasArt, drawTileArt } from './tileart.js';
 
 const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
@@ -138,6 +139,7 @@ function resize() {
 window.addEventListener('resize', resize);
 resize();
 
+const art = []; // tile, tx, ty triples seen while filling the terrain
 function draw() {
   // Camera in whole device pixels, so nothing lands between pixels.
   const camXd = Math.round((player.x - viewW / 2) * dpr);
@@ -158,12 +160,17 @@ function draw() {
     for (let tx = x0; tx < x1; tx++) {
       const left = Math.round(tx * TILE * dpr) - camXd;
       const right = Math.round((tx + 1) * TILE * dpr) - camXd;
-      ctx.fillStyle = world.tileAt(tx, ty).color;
+      const tile = world.tileAt(tx, ty);
+      ctx.fillStyle = baseColor(tile);
       ctx.fillRect(left, top, right - left, bottom - top);
+      if (hasArt(tile)) art.push(tile, tx, ty);
     }
   }
 
   ctx.setTransform(dpr, 0, 0, dpr, -camXd, -camYd);
+  // Trees and pines are shapes on top of the ground they stand on.
+  for (let i = 0; i < art.length; i += 3) drawTileArt(ctx, art[i], art[i + 1] * TILE, art[i + 2] * TILE);
+  art.length = 0;
   items.draw(ctx);
   npcs.draw(ctx);
   player.draw(ctx);

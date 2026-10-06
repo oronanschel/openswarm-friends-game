@@ -23,7 +23,7 @@ The world has grassland and snow country; snowy regions grow pines, which block 
 
 On a touch screen, drag anywhere to walk and use the buttons at the bottom-right (Mute, 1, 2, 3, 4, Eat, E, Chop) in place of the keys. The ? button at the left, under the recipe list, shows or hides the controls panel, and the Dark button beside it is the N key.
 
-Press N for dark mode: the world goes almost black, with a small flickering light around you, a low hum (it follows Mute), and a vignette. It is off by default and remembered in the save; the day and night cycle carries on underneath.
+Press N for dark mode: the world goes almost black, with a small flickering light around you, a low hum (it follows Mute), and a vignette. It is off by default and remembered in the save; the day and night cycle carries on underneath. While it is on, up to six zombies roam the land and shuffle towards you when near; they are slow and cannot cross water. One that touches you takes a single berry, stone or shell, shoves you back, and stands dazed for a few seconds. Turning dark mode off removes them.
 
 Short synthesized sound effects play for pickups, chopping, eating and making friends; press M to mute or unmute them (remembered between visits).
 

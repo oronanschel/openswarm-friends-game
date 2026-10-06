@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { buttonRects, HelpButton } from '../src/touch.js';
 import { ItemTypes } from '../src/items.js';
+import { MAX_ZOMBIES } from '../src/zombies.js';
 
 // Boots the real src/main.js against stand-ins for the browser and drives it.
 // It cannot say how anything looks, only that the entry point wires the
@@ -363,6 +364,57 @@ test('N turns dark mode on and off, and the choice is saved', async () => {
   game.release('KeyN');
   game.fire('pagehide');
   assert.equal(game.saved().dark, false);
+});
+
+test('zombies walk the world in dark mode and are gone when it is turned off', async (t) => {
+  // Zombies use Math.random; pin it so this test runs the same every time.
+  let seed = 12345;
+  t.mock.method(Math, 'random', () => {
+    seed = (Math.imul(seed, 1664525) + 1013904223) | 0;
+    return (seed >>> 0) / 4294967296;
+  });
+  const game = await boot('zombies', {
+    width: 800,
+    height: 600,
+    dpr: 1,
+    stored: { [SAVE_KEY]: JSON.stringify(stockedSave()), [HELP_KEY]: '1' },
+  });
+  // Each zombie is one circle; with the player standing still, nothing else
+  // changes how many circles a frame draws.
+  const circles = () => {
+    const before = game.counts.arc;
+    game.run(1);
+    return game.counts.arc - before;
+  };
+  game.run(5);
+  const light = circles();
+
+  game.key('KeyN');
+  game.release('KeyN');
+  // One may appear per frame, when the spot tried is land.
+  game.run(120);
+  const dark = circles();
+  assert.ok(dark > light, `${dark} > ${light}`);
+  assert.ok(dark - light <= MAX_ZOMBIES, `${dark} - ${light}`);
+
+  // Half a minute of them shuffling about, grabbing if they get there.
+  game.run(1800);
+  game.fire('pagehide');
+  const bag = new Map(game.saved().inventory);
+  // Whatever happened, crafted things and wood are untouched.
+  const { STONE_AXE, NECKLACE, JAM, WOOD, RAFT } = ItemTypes;
+  assert.deepEqual([STONE_AXE, NECKLACE, JAM, WOOD, RAFT].map((type) => bag.get(type.id)), [1, 1, 2, 7, 1]);
+
+  game.key('KeyN');
+  game.release('KeyN');
+  game.run(1);
+  // A shove may have moved the player, so the scenery can differ from the
+  // start; what matters is that turning it on again starts from none.
+  const off = circles();
+  game.key('KeyN');
+  game.release('KeyN');
+  game.run(1);
+  assert.ok(circles() - off <= 2, 'zombies start again from none');
 });
 
 test('browser shortcuts are left alone: only a plain Shift+R wipes the save', async () => {

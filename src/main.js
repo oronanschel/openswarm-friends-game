@@ -13,6 +13,7 @@ import { TouchControls, buttonRects } from './touch.js';
 import { DayNight } from './daynight.js';
 import { Sound } from './sound.js';
 import { DarkMode } from './darkmode.js';
+import { Zombies } from './zombies.js';
 import { Help } from './help.js';
 import { promptFor, drawPrompt } from './prompt.js';
 import { groundColor, hasArt, drawTileArt } from './tileart.js';
@@ -31,6 +32,7 @@ const toasts = new Toasts();
 const quest = new Quest();
 const dayNight = new DayNight();
 const darkMode = new DarkMode();
+const zombies = new Zombies(world);
 
 // Progress is kept in localStorage; reading the property can itself throw.
 let storage = null;
@@ -211,6 +213,7 @@ function draw() {
   art.length = 0;
   items.draw(ctx);
   npcs.draw(ctx);
+  zombies.draw(ctx);
   player.draw(ctx);
   // Tint the world only; the HUD below stays readable at night.
   dayNight.draw(ctx, viewW, viewH, dpr);
@@ -248,6 +251,11 @@ function frame(now) {
     sound.play('boostEnd');
   }
   npcs.update(dt, player, inventory, dayNight.day);
+  // Zombies walk only in dark mode; one that reaches the player takes an item.
+  for (const event of zombies.update(dt, player, darkMode.on, inventory)) {
+    toasts.push(event.item ? 'A zombie took a ' + event.item.name + '!' : 'A zombie shoved you!');
+    sound.play('groan');
+  }
   items.update(player, inventory);
   toasts.update(dt);
   quest.update(dt, npcs.friends.size);

@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { World, Tiles, TileById, TILE, CHUNK } from '../src/world.js';
 import { Player } from '../src/player.js';
 import { Npcs } from '../src/npc.js';
-import { Items } from '../src/items.js';
+import { Items, ItemTypes } from '../src/items.js';
 import { Inventory } from '../src/inventory.js';
 import { chop } from '../src/chop.js';
 import { serialize, apply } from '../src/save.js';
@@ -73,6 +73,21 @@ test('chopping needs an axe and a tree within reach', () => {
   assert.equal(world.tileAt(tree.tx, tree.ty), Tiles.STUMP);
   assert.equal(world.isSolid((tree.tx + 0.5) * TILE, (tree.ty + 0.5) * TILE), false);
   assert.equal(inventory.count(AXE.id), 1);
+});
+
+test('chopping a tree gives one Wood, and a failed chop gives none', () => {
+  const world = new World(7);
+  const tree = findTree(world);
+  const player = new Player(beside(tree).x, beside(tree).y);
+  const inventory = new Inventory();
+  inventory.add(AXE.id);
+  assert.equal(chop(world, player, inventory, undefined), null);
+  assert.equal(inventory.count(ItemTypes.WOOD.id), 0);
+  assert.ok(chop(world, player, inventory, AXE));
+  assert.equal(inventory.count(ItemTypes.WOOD.id), 1);
+  // The same spot now holds a stump, so there is nothing more to chop.
+  assert.equal(chop(world, player, inventory, AXE), null);
+  assert.equal(inventory.count(ItemTypes.WOOD.id), 1);
 });
 
 test('chopping picks the nearest tree and ignores ones out of reach', () => {

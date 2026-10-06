@@ -92,6 +92,16 @@ const Art = new Map([
     },
   ],
   [
+    'Wood',
+    (ctx, x, y, colour) => {
+      for (const [dy, tone] of [[-4, '#a1887f'], [0, colour], [4, '#6d4c41']]) {
+        ctx.fillStyle = tone; // three stacked logs
+        ctx.fillRect(x - 5, y + dy - 2, 10, 4);
+        ctx.strokeRect(x - 5, y + dy - 2, 10, 4);
+      }
+    },
+  ],
+  [
     'Stone Axe',
     (ctx, x, y, colour) => {
       ctx.fillStyle = colour; // wooden handle, running up to the right

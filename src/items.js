@@ -17,6 +17,8 @@ export const ItemTypes = {
   STONE_AXE: { id: 3, name: 'Stone Axe', color: '#6d4c41' },
   NECKLACE: { id: 4, name: 'Shell Necklace', color: '#f8bbd0' },
   JAM: { id: 5, name: 'Berry Jam', color: '#7b1fa2' },
+  // Comes from chopping; see chop.js.
+  WOOD: { id: 6, name: 'Wood', color: '#8d6e63' },
 };
 
 export const ItemById = [];

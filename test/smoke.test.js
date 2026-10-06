@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { buttonRects, HelpButton } from '../src/touch.js';
+import { ItemTypes } from '../src/items.js';
 
 // Boots the real src/main.js against stand-ins for the browser and drives it.
 // It cannot say how anything looks, only that the entry point wires the
@@ -43,12 +44,13 @@ function fakeCanvas(counts) {
 
 // Installs the globals main.js reads, imports a fresh copy of it, and returns
 // handles for driving it. `tag` makes the import a new module instance.
-async function boot(tag, { width, height, dpr }) {
+// `stored` is what localStorage already holds, as { key: string }.
+async function boot(tag, { width, height, dpr, stored = {} }) {
   const counts = {};
   const canvas = fakeCanvas(counts);
   const listeners = { window: {}, document: {} };
   const on = (map) => (name, fn) => (map[name] ||= []).push(fn);
-  const data = new Map();
+  const data = new Map(Object.entries(stored));
   const frames = [];
   const intervals = [];
   let now = 0;
@@ -249,4 +251,98 @@ test('the game runs at a fractional zoom on a narrow window and follows a resize
   globalThis.document.visibilityState = 'hidden';
   game.fireDocument('visibilitychange');
   assert.ok(game.saved());
+});
+
+// A save for the game's world (seed 1337) with a stocked inventory. No player
+// position, so the fresh spawn is kept.
+function stockedSave(overrides = {}) {
+  const { BERRY, STONE_AXE, NECKLACE, JAM, WOOD, RAFT } = ItemTypes;
+  return {
+    version: 1,
+    seed: 1337,
+    inventory: [[BERRY.id, 4], [STONE_AXE.id, 1], [NECKLACE.id, 1], [JAM.id, 2], [WOOD.id, 7], [RAFT.id, 1]],
+    collected: [],
+    gifted: [],
+    friends: [],
+    tiles: [],
+    time: 100,
+    day: 3,
+    friendGifts: [],
+    ...overrides,
+  };
+}
+
+test('booting from a save restores the inventory, and the actions that need items work', async () => {
+  const { BERRY, JAM, WOOD, RAFT } = ItemTypes;
+  const game = await boot('saved', {
+    width: 800,
+    height: 600,
+    dpr: 1,
+    // Help already seen, so no key press is spent closing it.
+    stored: { [SAVE_KEY]: JSON.stringify(stockedSave()), [HELP_KEY]: '1' },
+  });
+  const count = (type) => new Map(game.saved().inventory).get(type.id) || 0;
+  const press = (code) => {
+    game.key(code);
+    game.release(code);
+    game.run(2);
+    game.fire('pagehide');
+  };
+
+  game.run(3);
+  game.fire('pagehide');
+  assert.equal(count(JAM), 2);
+  assert.equal(count(RAFT), 1);
+  // The clock carries on from the save.
+  assert.equal(game.saved().day, 3);
+  assert.ok(game.saved().time > 100 && game.saved().time < 101);
+
+  // F eats one jam.
+  press('KeyF');
+  assert.equal(count(JAM), 1);
+
+  // 3 turns three berries into a jam.
+  press('Digit3');
+  assert.equal(count(BERRY), 1);
+  assert.equal(count(JAM), 2);
+  // And again with one berry left: refused, nothing changes.
+  press('Digit3');
+  assert.equal(count(BERRY), 1);
+  assert.equal(count(JAM), 2);
+
+  // 4 is refused while a raft is held, and the wood is kept.
+  press('Digit4');
+  assert.equal(count(WOOD), 7);
+  assert.equal(count(RAFT), 1);
+
+  // The rest of the keys, with items in the bag, then a walk while boosted.
+  for (const code of ['Space', 'KeyE', 'KeyH', 'KeyH', 'KeyM', 'KeyM']) press(code);
+  for (const code of ['KeyD', 'KeyS', 'KeyA', 'KeyW']) {
+    game.key(code);
+    game.run(60);
+    game.release(code);
+  }
+  game.fire('pagehide');
+  assert.equal(count(RAFT), 1);
+});
+
+test('a save from another world is ignored and the game starts fresh', async () => {
+  const game = await boot('other-world', {
+    width: 800,
+    height: 600,
+    dpr: 1,
+    stored: { [SAVE_KEY]: JSON.stringify(stockedSave({ seed: 42 })) },
+  });
+  game.run(3);
+  game.fire('pagehide');
+  const saved = game.saved();
+  assert.equal(saved.seed, 1337);
+  assert.deepEqual(saved.inventory, []);
+  assert.equal(saved.day, 0);
+
+  // Unreadable storage contents do not stop the game either.
+  const broken = await boot('broken-save', { width: 800, height: 600, dpr: 1, stored: { [SAVE_KEY]: '{not json' } });
+  broken.run(3);
+  broken.fire('pagehide');
+  assert.deepEqual(broken.saved().inventory, []);
 });

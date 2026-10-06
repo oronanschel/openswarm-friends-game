@@ -34,6 +34,17 @@ const PAD = 8;
 const WIDTH = 250;
 
 const COMPACT_WIDTH = 140;
+const MISSING = '#ffcc66'; // an input the player is still short of
+
+// A recipe's inputs as panel text, in order: `{ text, missing }` per input.
+// An input the player has enough of reads "2 Stone"; one they are short of
+// reads "1/2 Stone", what they hold out of what it takes.
+export function recipeInputs(inventory, recipe) {
+  return recipe.inputs.map(([type, n]) => {
+    const have = inventory.count(type.id);
+    return have >= n ? { text: n + ' ' + type.name, missing: false } : { text: have + '/' + n + ' ' + type.name, missing: true };
+  });
+}
 
 // How far down the view the panel reaches with its footer line, in CSS
 // pixels, for other HUD parts to sit below it.
@@ -54,11 +65,37 @@ export function drawRecipes(ctx, inventory, dpr, footer = null, compact = false)
   ctx.fillStyle = '#fff';
   ctx.fillText('Craft', MARGIN + PAD, MARGIN + PAD);
   Recipes.forEach((recipe, i) => {
-    const inputs = recipe.inputs.map(([type, n]) => n + ' ' + type.name).join(' + ');
-    const text = compact ? `[${i + 1}] ${recipe.output.name}` : `[${i + 1}] ${recipe.output.name} = ${inputs}`;
-    ctx.globalAlpha = canCraft(inventory, recipe) && !alreadyHave(inventory, recipe) ? 1 : 0.4;
-    ctx.fillText(text, MARGIN + PAD, MARGIN + PAD + LINE * (i + 1));
+    const y = MARGIN + PAD + LINE * (i + 1);
+    const held = alreadyHave(inventory, recipe);
+    const dim = canCraft(inventory, recipe) && !held ? 1 : 0.4;
+    const head = `[${i + 1}] ${recipe.output.name}`;
+    ctx.fillStyle = '#fff';
+    ctx.globalAlpha = dim;
+    if (compact) {
+      ctx.fillText(head, MARGIN + PAD, y);
+      return;
+    }
+    // Piece by piece, so the inputs still to find stand out from the dimmed
+    // line: those are the next thing to go and pick up.
+    let x = MARGIN + PAD;
+    const put = (text) => {
+      // maxWidth squeezes a piece rather than letting it run out of the panel.
+      ctx.fillText(text, x, y, Math.max(1, MARGIN + WIDTH - PAD - x));
+      x += ctx.measureText(text).width;
+    };
+    put(head + ' = ');
+    recipeInputs(inventory, recipe).forEach((input, j) => {
+      ctx.fillStyle = '#fff';
+      ctx.globalAlpha = dim;
+      if (j) put(' + ');
+      if (input.missing && !held) {
+        ctx.fillStyle = MISSING;
+        ctx.globalAlpha = 1;
+      }
+      put(input.text);
+    });
   });
+  ctx.fillStyle = '#fff';
   if (footer) {
     ctx.globalAlpha = 1;
     ctx.fillText(footer, MARGIN + PAD, MARGIN + PAD + LINE * (Recipes.length + 1));

@@ -2,10 +2,12 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Friends Game</title>
   <style>
     html, body { margin: 0; height: 100%; background: #111; overflow: hidden; }
-    canvas { display: block; image-rendering: pixelated; }
+    /* touch-action: none keeps a drag from scrolling or zooming the page. */
+    canvas { display: block; image-rendering: pixelated; touch-action: none; user-select: none; -webkit-user-select: none; }
   </style>
 </head>
 <body>

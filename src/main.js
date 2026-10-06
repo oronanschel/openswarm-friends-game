@@ -8,6 +8,7 @@ import { Toasts } from './toasts.js';
 import { Recipes, craft, drawRecipes } from './crafting.js';
 import { save, load, clear } from './save.js';
 import { chop } from './chop.js';
+import { TouchControls } from './touch.js';
 
 const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
@@ -77,6 +78,17 @@ window.addEventListener('keydown', (e) => {
 // Canvas backing store is in device pixels; drawing uses CSS pixels.
 let viewW = 0;
 let viewH = 0;
+// On touch screens a drag steers and on-screen buttons stand in for the keys
+// above, by sending the same keydown the keyboard would.
+const touch = new TouchControls(
+  canvas,
+  input,
+  (code) => {
+    window.dispatchEvent(new KeyboardEvent('keydown', { code }));
+    window.dispatchEvent(new KeyboardEvent('keyup', { code }));
+  },
+  () => ({ width: viewW, height: viewH })
+);
 let dpr = 1;
 function resize() {
   dpr = window.devicePixelRatio || 1;
@@ -126,6 +138,7 @@ function draw() {
   const friends = 'Friends: ' + npcs.friends.size + (narrow ? '' : ' (E: give necklace)');
   drawRecipes(ctx, inventory, dpr, friends, narrow);
   toasts.draw(ctx, viewH, dpr);
+  touch.draw(ctx, viewW, viewH, dpr);
 }
 
 let last = performance.now();

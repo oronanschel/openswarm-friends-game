@@ -7,16 +7,22 @@ export const Recipes = [
   { key: 'Digit1', output: STONE_AXE, inputs: [[STONE, 2], [BERRY, 1]] },
   { key: 'Digit2', output: NECKLACE, inputs: [[SHELL, 3]] },
   { key: 'Digit3', output: JAM, inputs: [[BERRY, 3]] },
-  { key: 'Digit4', output: RAFT, inputs: [[WOOD, 6]] },
+  // `unique`: one is all anyone needs, so a second is refused.
+  { key: 'Digit4', output: RAFT, inputs: [[WOOD, 6]], unique: true },
 ];
 
 export function canCraft(inventory, recipe) {
   return recipe.inputs.every(([type, n]) => inventory.count(type.id) >= n);
 }
 
-// Consumes the inputs and adds the output; returns false if unaffordable.
+export function alreadyHave(inventory, recipe) {
+  return Boolean(recipe.unique) && inventory.count(recipe.output.id) > 0;
+}
+
+// Consumes the inputs and adds the output; returns false, changing nothing, if
+// unaffordable or if a unique output is already held.
 export function craft(inventory, recipe) {
-  if (!canCraft(inventory, recipe)) return false;
+  if (alreadyHave(inventory, recipe) || !canCraft(inventory, recipe)) return false;
   for (const [type, n] of recipe.inputs) inventory.remove(type.id, n);
   inventory.add(recipe.output.id);
   return true;
@@ -46,7 +52,7 @@ export function drawRecipes(ctx, inventory, dpr, footer = null, compact = false)
   Recipes.forEach((recipe, i) => {
     const inputs = recipe.inputs.map(([type, n]) => n + ' ' + type.name).join(' + ');
     const text = compact ? `[${i + 1}] ${recipe.output.name}` : `[${i + 1}] ${recipe.output.name} = ${inputs}`;
-    ctx.globalAlpha = canCraft(inventory, recipe) ? 1 : 0.4;
+    ctx.globalAlpha = canCraft(inventory, recipe) && !alreadyHave(inventory, recipe) ? 1 : 0.4;
     ctx.fillText(text, MARGIN + PAD, MARGIN + PAD + LINE * (i + 1));
   });
   if (footer) {

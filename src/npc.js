@@ -1,4 +1,5 @@
 import { TILE } from './world.js';
+import { ItemById } from './items.js';
 
 const REGION = 16; // tiles per side of a spawn region
 const LOAD_RADIUS = 2; // regions kept populated around the player
@@ -16,6 +17,7 @@ const LINES = [
   'The sand is warm today.',
 ];
 const COLORS = ['#d9534f', '#8e6bd1', '#e08a2e', '#3fb6c6'];
+const GIFT_CHANCE = 1 / 3;
 
 // Small seeded PRNG so each region always spawns the same NPCs.
 function rng(seed) {
@@ -49,6 +51,9 @@ class Npc {
     this.dy = 0;
     this.timer = 0;
     this.talking = false;
+    this.key = null; // "rx,ry,index": stable across region reloads
+    this.gift = null; // item type handed over on first talk, if any
+    this.giving = false; // true while showing the gift line
   }
 
   update(dt, player, world) {
@@ -88,7 +93,8 @@ class Npc {
   }
 
   drawBubble(ctx) {
-    const text = this.name + ': ' + this.line;
+    const line = this.giving ? 'Here, take this ' + this.gift.name.toLowerCase() + '!' : this.line;
+    const text = this.name + ': ' + line;
     ctx.font = '13px sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
@@ -110,6 +116,8 @@ export class Npcs {
   constructor(world) {
     this.world = world;
     this.regions = new Map();
+    // Keys of NPCs that already handed over their gift; persisted by save/load.
+    this.gifted = new Set();
   }
 
   // Every NPC in a loaded region, for other systems such as the minimap.
@@ -125,12 +133,21 @@ export class Npcs {
     for (let i = 0; i < count * 4 && npcs.length < count; i++) {
       const x = (rx * REGION + Math.floor(random() * REGION) + 0.5) * TILE;
       const y = (ry * REGION + Math.floor(random() * REGION) + 0.5) * TILE;
-      if (!collides(x, y, this.world)) npcs.push(new Npc(x, y, random));
+      if (collides(x, y, this.world)) continue;
+      const npc = new Npc(x, y, random);
+      npc.key = rx + ',' + ry + ',' + npcs.length;
+      // Gifts use their own PRNG so they don't shift names, lines or positions.
+      const giftRandom = rng(
+        Math.imul(rx, 2654435761) ^ Math.imul(ry, 40503) ^ Math.imul(npcs.length + 1, 97) ^ Math.imul(this.world.seed, 2246822519)
+      );
+      if (giftRandom() < GIFT_CHANCE) npc.gift = ItemById[Math.floor(giftRandom() * ItemById.length)];
+      npcs.push(npc);
     }
     return npcs;
   }
 
-  update(dt, player) {
+  // `inventory` is optional; without it NPCs talk but never hand over gifts.
+  update(dt, player, inventory) {
     const prx = Math.floor(player.x / TILE / REGION);
     const pry = Math.floor(player.y / TILE / REGION);
     for (let ry = pry - LOAD_RADIUS; ry <= pry + LOAD_RADIUS; ry++) {
@@ -145,7 +162,15 @@ export class Npcs {
       if (Math.abs(rx - prx) > LOAD_RADIUS + 1 || Math.abs(ry - pry) > LOAD_RADIUS + 1) this.regions.delete(key);
     }
     for (const npcs of this.regions.values()) {
-      for (const npc of npcs) npc.update(dt, player, this.world);
+      for (const npc of npcs) {
+        npc.update(dt, player, this.world);
+        if (!npc.talking) npc.giving = false;
+        else if (inventory && npc.gift && !this.gifted.has(npc.key)) {
+          inventory.add(npc.gift.id);
+          this.gifted.add(npc.key);
+          npc.giving = true;
+        }
+      }
     }
   }
 

@@ -59,7 +59,7 @@ const Art = new Map([
       ctx.beginPath();
       for (const dx of [-3, 0, 3]) {
         ctx.moveTo(x, y + 5);
-        ctx.lineTo(x + dx * 1.5, y - 4);
+        ctx.lineTo(x + dx * 1.3, y - 4);
       }
       ctx.stroke();
       ctx.strokeStyle = OUTLINE;

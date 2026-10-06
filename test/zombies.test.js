@@ -186,6 +186,36 @@ test('each zombie is drawn, and nothing when there are none', () => {
   assert.deepEqual(arcs.map((a) => a.slice(0, 2)), [[5, 6], [50, 60]]);
 });
 
+test('each zombie gets a pair of glowing eyes, dimmer while dazed, and none when there are no zombies', () => {
+  const calls = [];
+  const state = { globalAlpha: 1 };
+  const ctx = new Proxy(
+    { fillRect: (...args) => calls.push({ name: 'fillRect', args, alpha: state.globalAlpha }) },
+    {
+      get: (t, name) => (name in t ? t[name] : name in state ? state[name] : () => calls.push({ name })),
+      set: (t, name, value) => ((state[name] = value), true),
+    }
+  );
+  const zombies = new Zombies(open, seeded());
+  zombies.drawEyes(ctx);
+  assert.equal(calls.length, 0);
+
+  zombies.all.push({ x: 100, y: 200, dx: 1, dy: 0, timer: 0, dazed: 0 }, { x: 300, y: 50, dx: 0, dy: 1, timer: 0, dazed: 2 });
+  zombies.drawEyes(ctx);
+  assert.equal(calls[0].name, 'save');
+  assert.equal(calls.at(-1).name, 'restore');
+  const rects = calls.filter((c) => c.name === 'fillRect');
+  assert.equal(rects.length, 4);
+  // Each pair sits on its zombie's body, shifted the way it faces.
+  for (const [i, zombie] of zombies.all.entries()) {
+    for (const { args } of rects.slice(i * 2, i * 2 + 2)) {
+      assert.ok(Math.hypot(args[0] + 1 - zombie.x, args[1] + 1.5 - zombie.y) <= 10);
+    }
+  }
+  assert.ok(rects[0].args[0] + rects[1].args[0] + 2 > 200, 'the first looks to the right');
+  assert.ok(rects[2].alpha < rects[0].alpha, 'the dazed one is dimmer');
+});
+
 test('there is a groan sound for the grab', () => {
   assert.ok(Effects.groan.length > 0);
   for (const [freq, start, length] of Effects.groan) assert.ok(freq > 0 && start >= 0 && length > 0);

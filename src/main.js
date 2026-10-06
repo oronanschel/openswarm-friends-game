@@ -218,7 +218,9 @@ function draw() {
   // Tint the world only; the HUD below stays readable at night.
   dayNight.draw(ctx, viewW, viewH, dpr);
   darkMode.draw(ctx, viewW, viewH, dpr);
-  // Still in world coordinates: villagers' words show through the darkness.
+  // Still in world coordinates: zombies' eyes and villagers' words show
+  // through the darkness. (There are no zombies unless dark mode is on.)
+  zombies.drawEyes(ctx);
   if (darkMode.on) npcs.drawBubbles(ctx);
   minimap.draw(ctx, viewW, dpr, player, npcs.all, items.all);
   inventory.draw(ctx, viewH, dpr, viewW);

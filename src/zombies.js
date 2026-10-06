@@ -1,6 +1,6 @@
 import { TILE } from './world.js';
 import { RawItems } from './items.js';
-import { drawFace } from './face.js';
+import { drawFace, eyes } from './face.js';
 
 export const MAX_ZOMBIES = 6;
 export const SPAWN_MIN = 260; // pixels from the player: outside the dark-mode light
@@ -137,5 +137,19 @@ export class Zombies {
       ctx.stroke();
       drawFace(ctx, zombie.x, zombie.y, zombie.dx, zombie.dy);
     }
+  }
+
+  // A pair of small glowing eyes per zombie, to be drawn after the darkness:
+  // out of the light they are all that shows, so the player can see one
+  // coming. Dim while it is dazed. Restores the context's fill and alpha.
+  drawEyes(ctx) {
+    if (!this.all.length) return;
+    ctx.save();
+    ctx.fillStyle = '#d6ff6b';
+    for (const zombie of this.all) {
+      ctx.globalAlpha = zombie.dazed > 0 ? 0.35 : 0.9;
+      for (const eye of eyes(zombie.x, zombie.y, zombie.dx, zombie.dy)) ctx.fillRect(eye.x - 1, eye.y - 1.5, 2, 3);
+    }
+    ctx.restore();
   }
 }

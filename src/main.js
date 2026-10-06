@@ -2,11 +2,12 @@ import { World, TILE } from './world.js';
 import { Player } from './player.js';
 import { Npcs } from './npc.js';
 import { Minimap } from './minimap.js';
-import { Items, ItemById } from './items.js';
+import { Items, ItemById, ItemTypes } from './items.js';
 import { Inventory } from './inventory.js';
 import { Toasts } from './toasts.js';
 import { Recipes, craft, drawRecipes } from './crafting.js';
 import { save, load, clear } from './save.js';
+import { chop } from './chop.js';
 
 const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
@@ -48,6 +49,13 @@ window.addEventListener('keydown', (e) => {
   resetting = true;
   clear(storage);
   window.location.reload();
+});
+// Space chops the nearest tree, once the player has crafted a stone axe.
+window.addEventListener('keydown', (e) => {
+  if (e.code !== 'Space' || e.repeat) return;
+  if (!chop(world, player, inventory, ItemTypes.STONE_AXE)) return;
+  minimap.invalidate();
+  toasts.push('Chopped a tree');
 });
 // Number keys craft the matching recipe.
 window.addEventListener('keydown', (e) => {

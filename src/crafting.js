@@ -1,12 +1,13 @@
 import { ItemTypes } from './items.js';
 
-const { BERRY, STONE, SHELL, STONE_AXE, NECKLACE, JAM } = ItemTypes;
+const { BERRY, STONE, SHELL, STONE_AXE, NECKLACE, JAM, WOOD, RAFT } = ItemTypes;
 
 // `key` is the KeyboardEvent.code that crafts the recipe.
 export const Recipes = [
   { key: 'Digit1', output: STONE_AXE, inputs: [[STONE, 2], [BERRY, 1]] },
   { key: 'Digit2', output: NECKLACE, inputs: [[SHELL, 3]] },
   { key: 'Digit3', output: JAM, inputs: [[BERRY, 3]] },
+  { key: 'Digit4', output: RAFT, inputs: [[WOOD, 6]] },
 ];
 
 export function canCraft(inventory, recipe) {

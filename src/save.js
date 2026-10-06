@@ -30,13 +30,16 @@ export function apply(data, { world, player, inventory, items, npcs, dayNight })
   // Changed tiles first: the saved position may stand where a tree used to be.
   // Saves from before tiles could change have no list.
   world.restoreTiles(Array.isArray(data.tiles) ? data.tiles : []);
+  // The inventory goes before the position: a player with a Raft may be saved
+  // standing on water.
+  inventory.counts = new Map(data.inventory || []);
+  player.sync?.(inventory);
   const { x, y } = data.player || {};
   // Keep the fresh spawn if the saved spot is unusable.
   if (Number.isFinite(x) && Number.isFinite(y) && !player.collides(x, y, world)) {
     player.x = x;
     player.y = y;
   }
-  inventory.counts = new Map(data.inventory || []);
   items.collected = new Set(data.collected || []);
   // Loaded regions were spawned without the collected set; respawn them.
   items.regions.clear();

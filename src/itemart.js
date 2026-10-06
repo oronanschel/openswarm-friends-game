@@ -102,6 +102,19 @@ const Art = new Map([
     },
   ],
   [
+    'Raft',
+    (ctx, x, y, colour) => {
+      for (const dx of [-5, -1.7, 1.7]) {
+        ctx.fillStyle = colour; // planks side by side
+        ctx.fillRect(x + dx, y - 5, 3.3, 10);
+        ctx.strokeRect(x + dx, y - 5, 3.3, 10);
+      }
+      ctx.fillStyle = '#6d4c41'; // the crosspiece lashing them together
+      ctx.fillRect(x - 5, y - 1, 10, 2);
+      ctx.strokeRect(x - 5, y - 1, 10, 2);
+    },
+  ],
+  [
     'Stone Axe',
     (ctx, x, y, colour) => {
       ctx.fillStyle = colour; // wooden handle, running up to the right

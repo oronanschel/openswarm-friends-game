@@ -19,6 +19,8 @@ export const ItemTypes = {
   JAM: { id: 5, name: 'Berry Jam', color: '#7b1fa2' },
   // Comes from chopping; see chop.js.
   WOOD: { id: 6, name: 'Wood', color: '#8d6e63' },
+  // Crafted only; carrying one lets the player walk on water. See player.js.
+  RAFT: { id: 7, name: 'Raft', color: '#a1887f' },
 };
 
 export const ItemById = [];

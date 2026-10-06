@@ -1,6 +1,8 @@
 import { TILE } from './world.js';
 
 const SPEED = 160; // pixels per second
+export const BOOST = 1.5; // speed multiplier while a boost lasts
+export const BOOST_SECONDS = 20;
 export const RADIUS = 10;
 const EPSILON = 0.001;
 
@@ -8,9 +10,21 @@ export class Player {
   constructor(x, y) {
     this.x = x;
     this.y = y;
+    this.boost = 0; // seconds of speed boost left
+  }
+
+  // Eats one `food` (an item type) from the inventory for a speed boost.
+  // Eating again while boosted restarts the timer; the speed does not stack.
+  // Returns false and changes nothing if there is none to eat.
+  eat(inventory, food) {
+    if (!food || !inventory.remove(food.id)) return false;
+    this.boost = BOOST_SECONDS;
+    return true;
   }
 
   update(dt, input, world) {
+    const speed = this.boost > 0 ? SPEED * BOOST : SPEED;
+    this.boost = Math.max(0, this.boost - dt);
     let dx = 0;
     let dy = 0;
     if (input.has('ArrowLeft') || input.has('KeyA')) dx -= 1;
@@ -22,8 +36,8 @@ export class Player {
       dy *= Math.SQRT1_2;
     }
     // Move each axis separately so the player slides along walls.
-    this.x = this.moveAxis(this.x, dx * SPEED * dt, (x) => this.collides(x, this.y, world));
-    this.y = this.moveAxis(this.y, dy * SPEED * dt, (y) => this.collides(this.x, y, world));
+    this.x = this.moveAxis(this.x, dx * speed * dt, (x) => this.collides(x, this.y, world));
+    this.y = this.moveAxis(this.y, dy * speed * dt, (y) => this.collides(this.x, y, world));
   }
 
   // Move along one axis; if blocked, stop flush against the wall edge.

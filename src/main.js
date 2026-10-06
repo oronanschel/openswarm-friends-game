@@ -6,6 +6,7 @@ import { Items, ItemById, ItemTypes } from './items.js';
 import { Inventory } from './inventory.js';
 import { Toasts } from './toasts.js';
 import { Recipes, craft, drawRecipes } from './crafting.js';
+import { Quest, GOAL } from './quest.js';
 import { save, load, clear } from './save.js';
 import { chop } from './chop.js';
 
@@ -20,6 +21,7 @@ const minimap = new Minimap(world);
 const items = new Items(world);
 const inventory = new Inventory();
 const toasts = new Toasts();
+const quest = new Quest();
 inventory.onAdd = (id, n) => toasts.push('+' + n + ' ' + ItemById[id].name);
 
 // Progress is kept in localStorage; reading the property can itself throw.
@@ -123,9 +125,11 @@ function draw() {
   inventory.draw(ctx, viewH, dpr);
   // Below this width the full recipe panel would run into the minimap.
   const narrow = viewW < 460;
-  const friends = 'Friends: ' + npcs.friends.size + (narrow ? '' : ' (E: give necklace)');
+  const hint = narrow || npcs.friends.size >= GOAL ? '' : ' (E: necklace)';
+  const friends = quest.progressText() + hint;
   drawRecipes(ctx, inventory, dpr, friends, narrow);
   toasts.draw(ctx, viewH, dpr);
+  quest.draw(ctx, viewW, viewH, dpr);
 }
 
 let last = performance.now();
@@ -136,6 +140,7 @@ function frame(now) {
   npcs.update(dt, player, inventory);
   items.update(player, inventory);
   toasts.update(dt);
+  quest.update(dt, npcs.friends.size);
   draw();
   requestAnimationFrame(frame);
 }

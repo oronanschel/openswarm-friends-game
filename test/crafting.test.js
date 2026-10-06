@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { Recipes, canCraft, craft, drawRecipes } from '../src/crafting.js';
+import { Recipes, canCraft, craft, drawRecipes, recipeInputs } from '../src/crafting.js';
 import { Inventory } from '../src/inventory.js';
 import { ItemTypes, ItemById, RawItems } from '../src/items.js';
 
@@ -55,5 +55,49 @@ test('the recipe panel restores context state', () => {
   drawRecipes(ctx, new Inventory(), 2);
   assert.equal(calls[0], 'save');
   assert.equal(calls.at(-1), 'restore');
-  assert.equal(calls.filter((c) => c === 'fillText').length, Recipes.length + 1);
+  // The title, then per recipe its name, its inputs and the plus signs between.
+  const pieces = Recipes.reduce((sum, r) => sum + r.inputs.length * 2, 0);
+  assert.equal(calls.filter((c) => c === 'fillText').length, pieces + 1);
+});
+
+test('recipe inputs read as a count when held and as have/need when short', () => {
+  const inventory = new Inventory();
+  inventory.add(STONE.id, 1);
+  inventory.add(BERRY.id, 4);
+  assert.deepEqual(recipeInputs(inventory, axe), [
+    { text: '1/2 Stone', missing: true },
+    { text: '1 Berry', missing: false },
+  ]);
+  inventory.add(STONE.id, 1);
+  assert.ok(recipeInputs(inventory, axe).every((input) => !input.missing));
+});
+
+test('the panel picks out only the inputs still to find', () => {
+  const inventory = new Inventory();
+  inventory.add(BERRY.id, 1);
+  const drawn = []; // [text, fillStyle, globalAlpha]
+  let end = 0; // furthest right any piece is allowed to reach
+  const ctx = new Proxy({}, {
+    get: (target, name) => {
+      if (name === 'measureText') return (text) => ({ width: text.length * 7 });
+      if (name === 'fillText') {
+        return (text, x, y, maxWidth) => {
+          drawn.push([text, target.fillStyle, target.globalAlpha]);
+          if (maxWidth !== undefined) end = Math.max(end, x + maxWidth);
+        };
+      }
+      return name in target ? target[name] : () => {};
+    },
+    set: (target, name, value) => ((target[name] = value), true),
+  });
+  drawRecipes(ctx, inventory, 1, 'Friends: 0');
+  const find = (text) => drawn.find((d) => d[0] === text);
+  const [, shortColor, shortAlpha] = find('0/2 Stone');
+  assert.notEqual(shortColor, '#fff');
+  assert.equal(shortAlpha, 1);
+  // The berry is in hand, so it stays with the rest of the dimmed line.
+  assert.deepEqual(find('1 Berry').slice(1), ['#fff', 0.4]);
+  assert.deepEqual(find('Friends: 0').slice(1), ['#fff', 1]);
+  // Every piece is held inside the panel, which spans 12 to 262.
+  assert.ok(end > 12 && end <= 262, `pieces may reach ${end}`);
 });

@@ -1,4 +1,5 @@
 import { TILE, Tiles } from './world.js';
+import { drawItemArt } from './itemart.js';
 
 const REGION = 16; // tiles per side of a spawn region
 const LOAD_RADIUS = 2; // regions kept populated around the player
@@ -98,6 +99,7 @@ export class Items {
     ctx.lineWidth = 1;
     for (const items of this.regions.values()) {
       for (const item of items) {
+        if (drawItemArt(ctx, item.type, item.x, item.y)) continue;
         ctx.fillStyle = item.type.color;
         ctx.fillRect(item.x - SIZE / 2, item.y - SIZE / 2, SIZE, SIZE);
         ctx.strokeRect(item.x - SIZE / 2, item.y - SIZE / 2, SIZE, SIZE);

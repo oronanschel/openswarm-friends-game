@@ -1,4 +1,5 @@
-import { TILE } from './world.js';
+import { TILE, Tiles } from './world.js';
+import { ItemTypes } from './items.js';
 import { drawFace } from './face.js';
 
 const SPEED = 160; // pixels per second
@@ -12,6 +13,7 @@ export class Player {
     this.x = x;
     this.y = y;
     this.boost = 0; // seconds of speed boost left
+    this.raft = false; // true while carrying a Raft: water does not block
     // The last direction moved, for the face; starts looking down the screen.
     this.faceX = 0;
     this.faceY = 1;
@@ -64,12 +66,23 @@ export class Player {
     return moved && !blocked(flush) ? flush : pos;
   }
 
+  // Whether the player carries a Raft; call after the inventory changes.
+  sync(inventory) {
+    this.raft = inventory.count(ItemTypes.RAFT.id) > 0;
+  }
+
+  // With a raft, water is the one kind of solid tile that does not block.
+  blocks(world, px, py) {
+    if (!world.isSolid(px, py)) return false;
+    return !(this.raft && world.tileAt(Math.floor(px / TILE), Math.floor(py / TILE)) === Tiles.WATER);
+  }
+
   collides(x, y, world) {
     return (
-      world.isSolid(x - RADIUS, y - RADIUS) ||
-      world.isSolid(x + RADIUS, y - RADIUS) ||
-      world.isSolid(x - RADIUS, y + RADIUS) ||
-      world.isSolid(x + RADIUS, y + RADIUS)
+      this.blocks(world, x - RADIUS, y - RADIUS) ||
+      this.blocks(world, x + RADIUS, y - RADIUS) ||
+      this.blocks(world, x - RADIUS, y + RADIUS) ||
+      this.blocks(world, x + RADIUS, y + RADIUS)
     );
   }
 

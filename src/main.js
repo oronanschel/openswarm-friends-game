@@ -12,7 +12,7 @@ import { chop } from './chop.js';
 import { TouchControls } from './touch.js';
 import { DayNight } from './daynight.js';
 import { Sound } from './sound.js';
-import { baseColor, hasArt, drawTileArt } from './tileart.js';
+import { groundColor, hasArt, drawTileArt } from './tileart.js';
 
 const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
@@ -161,14 +161,14 @@ function draw() {
       const left = Math.round(tx * TILE * dpr) - camXd;
       const right = Math.round((tx + 1) * TILE * dpr) - camXd;
       const tile = world.tileAt(tx, ty);
-      ctx.fillStyle = baseColor(tile);
+      ctx.fillStyle = groundColor(world, tx, ty);
       ctx.fillRect(left, top, right - left, bottom - top);
-      if (hasArt(tile)) art.push(tile, tx, ty);
+      if (hasArt(tile, tx, ty)) art.push(tile, tx, ty);
     }
   }
 
   ctx.setTransform(dpr, 0, 0, dpr, -camXd, -camYd);
-  // Trees and pines are shapes on top of the ground they stand on.
+  // Trees, pines, stumps and ripples are shapes on top of the ground fill.
   for (let i = 0; i < art.length; i += 3) drawTileArt(ctx, art[i], art[i + 1] * TILE, art[i + 2] * TILE);
   art.length = 0;
   items.draw(ctx);

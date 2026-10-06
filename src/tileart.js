@@ -13,13 +13,34 @@ export function baseColor(tile) {
   return (Ground.get(tile) || tile).color;
 }
 
-export function hasArt(tile) {
-  return Ground.has(tile);
+// The colour to fill the square at (tx, ty) with. A stump sits on whatever its
+// tree stood on, which the generator still knows.
+export function groundColor(world, tx, ty) {
+  const tile = world.tileAt(tx, ty);
+  if (tile !== Tiles.STUMP) return baseColor(tile);
+  const grew = world.generate(tx, ty);
+  return grew === Tiles.STUMP ? Tiles.GRASS.color : baseColor(grew);
+}
+
+const RIPPLES = 0.2; // share of water tiles that carry ripple marks
+
+// Deterministic [0, 1) per tile, so the same water tiles ripple every frame.
+function pick(tx, ty) {
+  let h = (Math.imul(tx, 73856093) ^ Math.imul(ty, 19349663)) | 0;
+  h = Math.imul(h ^ (h >>> 15), 1540483477);
+  return ((h ^ (h >>> 13)) >>> 0) / 4294967296;
+}
+
+// Whether the tile at (tx, ty) gets a shape drawn on top of its fill.
+export function hasArt(tile, tx, ty) {
+  if (tile === Tiles.WATER) return pick(tx, ty) < RIPPLES;
+  return tile === Tiles.STUMP || Ground.has(tile);
 }
 
 // Draws the shape for a tile whose top-left corner is at (x, y), in world
 // pixels. Everything stays inside the tile, so what blocks the player matches
-// what is drawn. Returns false, drawing nothing, for tiles without art.
+// what is drawn. Returns false, drawing nothing, for tiles that never have art;
+// hasArt decides which water tiles to call this for.
 export function drawTileArt(ctx, tile, x, y) {
   if (tile === Tiles.TREE) {
     ctx.fillStyle = TRUNK;
@@ -44,6 +65,24 @@ export function drawTileArt(ctx, tile, x, y) {
     // Snow on the tip.
     ctx.fillStyle = Tiles.SNOW.color;
     triangle(ctx, x + 16, y + 1, x + 12.5, y + 7, x + 19.5, y + 7);
+    return true;
+  }
+  if (tile === Tiles.STUMP) {
+    ctx.fillStyle = tile.color;
+    ctx.beginPath();
+    ctx.arc(x + 16, y + 18, 8, 0, Math.PI * 2);
+    ctx.fill();
+    // The cut top, lighter than the bark around it.
+    ctx.fillStyle = '#c9a26b';
+    ctx.beginPath();
+    ctx.arc(x + 16, y + 17, 5.5, 0, Math.PI * 2);
+    ctx.fill();
+    return true;
+  }
+  if (tile === Tiles.WATER) {
+    ctx.fillStyle = '#6f9bd6';
+    ctx.fillRect(x + 6, y + 11, 11, 2);
+    ctx.fillRect(x + 15, y + 20, 9, 2);
     return true;
   }
   return false;

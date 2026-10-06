@@ -1,4 +1,5 @@
 import { TILE } from './world.js';
+import { drawFace } from './face.js';
 
 const SPEED = 160; // pixels per second
 export const BOOST = 1.5; // speed multiplier while a boost lasts
@@ -11,6 +12,9 @@ export class Player {
     this.x = x;
     this.y = y;
     this.boost = 0; // seconds of speed boost left
+    // The last direction moved, for the face; starts looking down the screen.
+    this.faceX = 0;
+    this.faceY = 1;
   }
 
   // Eats one `food` (an item type) from the inventory for a speed boost.
@@ -36,6 +40,10 @@ export class Player {
     if (dx && dy) {
       dx *= Math.SQRT1_2;
       dy *= Math.SQRT1_2;
+    }
+    if (dx || dy) {
+      this.faceX = dx;
+      this.faceY = dy;
     }
     // Move each axis separately so the player slides along walls.
     this.x = this.moveAxis(this.x, dx * speed * dt, (x) => this.collides(x, this.y, world));
@@ -73,6 +81,7 @@ export class Player {
     ctx.strokeStyle = '#3a2f00';
     ctx.lineWidth = 2;
     ctx.stroke();
+    drawFace(ctx, this.x, this.y, this.faceX, this.faceY);
     if (this.boost <= 0) return;
     // A ring that empties clockwise from the top as the boost runs down.
     ctx.strokeStyle = '#ce93d8';

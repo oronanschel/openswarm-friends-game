@@ -31,7 +31,10 @@ test('full recipe panel still lists inputs', () => {
   const { ctx, calls } = recordingContext();
   drawRecipes(ctx, new Inventory(), 1);
   const texts = calls.filter((c) => c.name === 'fillText').map((c) => c.args[0]);
-  assert.ok(texts.slice(1).every((t) => t.includes('=')));
+  assert.equal(texts.filter((t) => t.includes('=')).length, Recipes.length);
+  for (const recipe of Recipes) {
+    for (const [type] of recipe.inputs) assert.ok(texts.some((t) => t.endsWith(' ' + type.name)), type.name);
+  }
 });
 
 test('NPC drawing restores context state and draws hearts as paths', () => {

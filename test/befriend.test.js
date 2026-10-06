@@ -89,6 +89,7 @@ test('the recipe panel draws the friend counter as a footer', () => {
     set: (target, name, value) => ((target[name] = value), true),
   });
   drawRecipes(ctx, new Inventory(), 1, 'Friends: 2');
-  assert.equal(texts.length, Recipes.length + 2);
+  assert.equal(texts[0], 'Craft');
+  assert.equal(texts.filter((t) => t.includes('=')).length, Recipes.length);
   assert.equal(texts.at(-1), 'Friends: 2');
 });

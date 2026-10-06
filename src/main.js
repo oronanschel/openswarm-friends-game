@@ -74,7 +74,7 @@ window.addEventListener('keydown', (e) => {
   const npc = npcs.talkingTo(player);
   if (!npc || npc.friend) return;
   if (npcs.befriend(npc, inventory)) toasts.push(npc.name + ' is now your friend!');
-  else toasts.push('Craft a Shell Necklace (3 shells, found on beaches) to befriend ' + npc.name);
+  else toasts.push('Needs a Shell Necklace (shells: beaches)');
 });
 
 // Canvas backing store is in device pixels; drawing uses CSS pixels.

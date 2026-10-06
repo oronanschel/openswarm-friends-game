@@ -32,15 +32,16 @@ export class Minimap {
     this.ty = ty;
   }
 
-  // Draws in screen space at the top-right corner; resets the canvas transform.
-  draw(ctx, viewWidth, player, npcs = []) {
+  // Draws in screen space (CSS pixels) at the top-right corner; replaces the canvas transform.
+  draw(ctx, viewWidth, dpr, player, npcs = []) {
     const tx = Math.floor(player.x / TILE);
     const ty = Math.floor(player.y / TILE);
     if (tx !== this.tx || ty !== this.ty) this.refresh(tx, ty);
 
     const left = viewWidth - SIZE - MARGIN;
     const top = MARGIN;
-    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.imageSmoothingEnabled = false; // keep tiles crisp when the buffer is scaled up
     ctx.drawImage(this.buffer, left, top);
 
     ctx.fillStyle = '#ffffff';

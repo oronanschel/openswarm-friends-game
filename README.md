@@ -16,3 +16,9 @@ python3 -m http.server 8000
 ```
 
 Move with WASD or the arrow keys. Water and trees block movement. Walk up to a villager to hear what they have to say.
+
+## Tests
+
+```sh
+npm test   # runs node --test (Node 20+), no dependencies
+```

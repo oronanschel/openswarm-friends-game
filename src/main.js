@@ -17,22 +17,31 @@ window.addEventListener('keydown', (e) => input.add(e.code));
 window.addEventListener('keyup', (e) => input.delete(e.code));
 window.addEventListener('blur', () => input.clear());
 
+// Canvas backing store is in device pixels; drawing uses CSS pixels.
+let viewW = 0;
+let viewH = 0;
+let dpr = 1;
 function resize() {
-  canvas.width = window.innerWidth;
-  canvas.height = window.innerHeight;
+  dpr = window.devicePixelRatio || 1;
+  viewW = window.innerWidth;
+  viewH = window.innerHeight;
+  canvas.width = Math.round(viewW * dpr);
+  canvas.height = Math.round(viewH * dpr);
+  canvas.style.width = viewW + 'px';
+  canvas.style.height = viewH + 'px';
 }
 window.addEventListener('resize', resize);
 resize();
 
 function draw() {
-  const camX = Math.round(player.x - canvas.width / 2);
-  const camY = Math.round(player.y - canvas.height / 2);
-  ctx.setTransform(1, 0, 0, 1, -camX, -camY);
+  const camX = Math.round(player.x - viewW / 2);
+  const camY = Math.round(player.y - viewH / 2);
+  ctx.setTransform(dpr, 0, 0, dpr, -camX * dpr, -camY * dpr);
 
   const x0 = Math.floor(camX / TILE);
   const y0 = Math.floor(camY / TILE);
-  const x1 = Math.ceil((camX + canvas.width) / TILE);
-  const y1 = Math.ceil((camY + canvas.height) / TILE);
+  const x1 = Math.ceil((camX + viewW) / TILE);
+  const y1 = Math.ceil((camY + viewH) / TILE);
   for (let ty = y0; ty < y1; ty++) {
     for (let tx = x0; tx < x1; tx++) {
       ctx.fillStyle = world.tileAt(tx, ty).color;

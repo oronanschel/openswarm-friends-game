@@ -1,11 +1,17 @@
 export const TILE = 32;
+export const CHUNK = 32; // tiles per chunk side
+const MAX_CHUNKS = 256; // ~256K tiles kept in memory
 
+// Ids are stable: append new tiles, never renumber. Save/load relies on them.
 export const Tiles = {
-  WATER: { color: '#2b5fa8', solid: true },
-  SAND: { color: '#d8c47a', solid: false },
-  GRASS: { color: '#4f9a3a', solid: false },
-  TREE: { color: '#25602a', solid: true },
+  WATER: { id: 0, color: '#2b5fa8', solid: true },
+  SAND: { id: 1, color: '#d8c47a', solid: false },
+  GRASS: { id: 2, color: '#4f9a3a', solid: false },
+  TREE: { id: 3, color: '#25602a', solid: true },
 };
+
+export const TileById = [];
+for (const tile of Object.values(Tiles)) TileById[tile.id] = tile;
 
 // Deterministic integer hash -> [0, 1).
 function hash(x, y, seed) {
@@ -30,19 +36,48 @@ function noise(x, y, scale, seed) {
 }
 
 export class World {
-  constructor(seed = 1) {
+  constructor(seed = 1, maxChunks = MAX_CHUNKS) {
     this.seed = seed;
-    this.cache = new Map();
+    this.maxChunks = maxChunks;
+    // Map iteration order doubles as LRU order: oldest first.
+    this.chunks = new Map();
+    this.lastKey = null;
+    this.lastChunk = null;
   }
 
   tileAt(tx, ty) {
-    const key = tx + ',' + ty;
-    let tile = this.cache.get(key);
-    if (!tile) {
-      tile = this.generate(tx, ty);
-      this.cache.set(key, tile);
+    const cx = Math.floor(tx / CHUNK);
+    const cy = Math.floor(ty / CHUNK);
+    const chunk = this.chunk(cx, cy);
+    return TileById[chunk[(ty - cy * CHUNK) * CHUNK + (tx - cx * CHUNK)]];
+  }
+
+  chunk(cx, cy) {
+    const key = cx + ',' + cy;
+    if (key === this.lastKey) return this.lastChunk;
+    let chunk = this.chunks.get(key);
+    if (chunk) {
+      this.chunks.delete(key);
+    } else {
+      chunk = this.generateChunk(cx, cy);
+      if (this.chunks.size >= this.maxChunks) {
+        this.chunks.delete(this.chunks.keys().next().value);
+      }
     }
-    return tile;
+    this.chunks.set(key, chunk);
+    this.lastKey = key;
+    this.lastChunk = chunk;
+    return chunk;
+  }
+
+  generateChunk(cx, cy) {
+    const ids = new Uint8Array(CHUNK * CHUNK);
+    for (let y = 0; y < CHUNK; y++) {
+      for (let x = 0; x < CHUNK; x++) {
+        ids[y * CHUNK + x] = this.generate(cx * CHUNK + x, cy * CHUNK + y).id;
+      }
+    }
+    return ids;
   }
 
   generate(tx, ty) {
@@ -57,12 +92,32 @@ export class World {
     return this.tileAt(Math.floor(px / TILE), Math.floor(py / TILE)).solid;
   }
 
-  // Find a walkable tile near the origin to spawn on.
-  findSpawn() {
+  // True if at least `min` walkable tiles are 4-connected to (tx, ty).
+  hasRoom(tx, ty, min) {
+    if (this.tileAt(tx, ty).solid) return false;
+    const seen = new Set([tx + ',' + ty]);
+    const queue = [[tx, ty]];
+    while (queue.length) {
+      const [x, y] = queue.shift();
+      for (const [nx, ny] of [[x + 1, y], [x - 1, y], [x, y + 1], [x, y - 1]]) {
+        const key = nx + ',' + ny;
+        if (seen.has(key) || this.tileAt(nx, ny).solid) continue;
+        seen.add(key);
+        if (seen.size >= min) return true;
+        queue.push([nx, ny]);
+      }
+    }
+    return false;
+  }
+
+  // Find a walkable tile near the origin that isn't boxed in.
+  findSpawn(minRoom = 64) {
     for (let r = 0; r < 200; r++) {
-      for (let dx = -r; dx <= r; dx++) {
-        for (const dy of [-r, r]) {
-          if (!this.tileAt(dx, dy).solid) return { x: (dx + 0.5) * TILE, y: (dy + 0.5) * TILE };
+      for (let dy = -r; dy <= r; dy++) {
+        // Full ring: every tile at Chebyshev distance r.
+        const edge = dy === -r || dy === r;
+        for (let dx = -r; dx <= r; dx += edge ? 1 : 2 * r) {
+          if (this.hasRoom(dx, dy, minRoom)) return { x: (dx + 0.5) * TILE, y: (dy + 0.5) * TILE };
         }
       }
     }

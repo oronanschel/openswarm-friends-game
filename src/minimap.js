@@ -14,6 +14,12 @@ export class Minimap {
     this.ty = null;
   }
 
+  // Call after a tile changes so the next draw repaints the terrain.
+  invalidate() {
+    this.tx = null;
+    this.ty = null;
+  }
+
   // Repaint the terrain buffer; only needed when the player enters a new tile.
   refresh(tx, ty) {
     if (!this.buffer) {

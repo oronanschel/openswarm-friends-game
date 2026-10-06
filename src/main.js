@@ -102,7 +102,7 @@ function frame(now) {
   const dt = Math.min((now - last) / 1000, 0.1);
   last = now;
   player.update(dt, input, world);
-  npcs.update(dt, player);
+  npcs.update(dt, player, inventory);
   items.update(player, inventory);
   draw();
   requestAnimationFrame(frame);

@@ -1,8 +1,10 @@
 import { ItemById } from './items.js';
+import { drawItemArt, ART_SIZE } from './itemart.js';
 
 const SLOT = 40;
 const GAP = 6;
 const MARGIN = 12;
+const ICON_SCALE = 1.5; // world art is 12px; hotbar icons are 18px
 
 // The hotbar's extent in CSS pixels from the bottom-left corner of the view,
 // for other HUD parts to stay clear of.
@@ -51,8 +53,15 @@ export class Inventory {
       ctx.strokeRect(left + 0.5, top + 0.5, SLOT - 1, SLOT - 1);
       const count = this.count(type.id);
       ctx.globalAlpha = count ? 1 : 0.3;
-      ctx.fillStyle = type.color;
-      ctx.fillRect(left + 12, top + 8, 16, 16);
+      // The same art as in the world, scaled up to fill the slot's icon area.
+      ctx.save();
+      ctx.translate(left + SLOT / 2, top + 16);
+      ctx.scale(ICON_SCALE, ICON_SCALE);
+      if (!drawItemArt(ctx, type, 0, 0)) {
+        ctx.fillStyle = type.color;
+        ctx.fillRect(-ART_SIZE / 2, -ART_SIZE / 2, ART_SIZE, ART_SIZE);
+      }
+      ctx.restore();
       ctx.globalAlpha = 1;
       ctx.fillStyle = '#fff';
       ctx.fillText(String(count), left + SLOT - 4, top + SLOT - 2);

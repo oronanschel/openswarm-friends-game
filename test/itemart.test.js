@@ -17,13 +17,14 @@ function recorder() {
     moveTo: (x, y) => points.push([x, y]),
     lineTo: (x, y) => points.push([x, y]),
     fillRect: (x, y, w, h) => points.push([x, y], [x + w, y + h]),
+    strokeRect: (x, y, w, h) => points.push([x, y], [x + w, y + h]),
     arc: (x, y, r) => points.push([x - r, y - r], [x + r, y + r]),
   };
   return { ctx, points, state };
 }
 
-test('berries, stones and shells are drawn inside their box', () => {
-  for (const type of [ItemTypes.BERRY, ItemTypes.STONE, ItemTypes.SHELL]) {
+test('every item type is drawn inside its box', () => {
+  for (const type of Object.values(ItemTypes)) {
     const { ctx, points, state } = recorder();
     assert.equal(drawItemArt(ctx, type, 100, -40), true, type.name);
     assert.ok(points.length > 0);
@@ -34,10 +35,8 @@ test('berries, stones and shells are drawn inside their box', () => {
   }
 });
 
-test('item types without art draw nothing so the caller can fall back', () => {
-  for (const type of [ItemTypes.JAM, ItemTypes.NECKLACE, ItemTypes.STONE_AXE]) {
-    const { ctx, points } = recorder();
-    assert.equal(drawItemArt(ctx, type, 0, 0), false);
-    assert.equal(points.length, 0);
-  }
+test('an unknown item type draws nothing so the caller can fall back', () => {
+  const { ctx, points } = recorder();
+  assert.equal(drawItemArt(ctx, { name: 'Mystery', color: '#000' }, 0, 0), false);
+  assert.equal(points.length, 0);
 });

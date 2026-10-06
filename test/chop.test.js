@@ -89,6 +89,23 @@ test('chopping picks the nearest tree and ignores ones out of reach', () => {
   assert.equal(flat.tileAt(2, 0), Tiles.TREE);
 });
 
+test('chopping every tree in a region does not change which NPCs spawn there', () => {
+  const snapshot = (world) => {
+    const npcs = new Npcs(world);
+    npcs.update(1 / 60, { x: 0, y: 0 });
+    return npcs.all.map((npc) => [npc.key, npc.name, npc.x, npc.y].join());
+  };
+  const before = snapshot(new World(1337));
+  const cleared = new World(1337);
+  for (let ty = -48; ty < 48; ty++) {
+    for (let tx = -48; tx < 48; tx++) {
+      if (cleared.tileAt(tx, ty) === Tiles.TREE) cleared.setTile(tx, ty, Tiles.STUMP);
+    }
+  }
+  assert.ok(before.length > 0);
+  assert.deepEqual(snapshot(cleared), before);
+});
+
 test('a chopped tree is saved, and the player can be restored standing on the stump', () => {
   const state = (world) => ({
     world,

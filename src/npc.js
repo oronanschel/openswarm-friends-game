@@ -1,5 +1,5 @@
 import { TILE } from './world.js';
-import { ItemById } from './items.js';
+import { RawItems } from './items.js';
 
 const REGION = 16; // tiles per side of a spawn region
 const LOAD_RADIUS = 2; // regions kept populated around the player
@@ -131,16 +131,18 @@ export class Npcs {
     const count = Math.floor(random() * 3);
     // A few attempts per NPC; a region that is mostly water just stays empty.
     for (let i = 0; i < count * 4 && npcs.length < count; i++) {
-      const x = (rx * REGION + Math.floor(random() * REGION) + 0.5) * TILE;
-      const y = (ry * REGION + Math.floor(random() * REGION) + 0.5) * TILE;
-      if (collides(x, y, this.world)) continue;
-      const npc = new Npc(x, y, random);
+      const tx = rx * REGION + Math.floor(random() * REGION);
+      const ty = ry * REGION + Math.floor(random() * REGION);
+      // Judge the tile as generated, not as the player has changed it, so the
+      // spawn order (and with it each NPC's key) never depends on chopped trees.
+      if (this.world.generate(tx, ty).solid) continue;
+      const npc = new Npc((tx + 0.5) * TILE, (ty + 0.5) * TILE, random);
       npc.key = rx + ',' + ry + ',' + npcs.length;
       // Gifts use their own PRNG so they don't shift names, lines or positions.
       const giftRandom = rng(
         Math.imul(rx, 2654435761) ^ Math.imul(ry, 40503) ^ Math.imul(npcs.length + 1, 97) ^ Math.imul(this.world.seed, 2246822519)
       );
-      if (giftRandom() < GIFT_CHANCE) npc.gift = ItemById[Math.floor(giftRandom() * ItemById.length)];
+      if (giftRandom() < GIFT_CHANCE) npc.gift = RawItems[Math.floor(giftRandom() * RawItems.length)];
       npcs.push(npc);
     }
     return npcs;

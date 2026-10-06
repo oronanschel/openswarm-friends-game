@@ -2,8 +2,9 @@ import { World, TILE } from './world.js';
 import { Player } from './player.js';
 import { Npcs } from './npc.js';
 import { Minimap } from './minimap.js';
-import { Items } from './items.js';
+import { Items, ItemById } from './items.js';
 import { Inventory } from './inventory.js';
+import { Toasts } from './toasts.js';
 import { save, load, clear } from './save.js';
 
 const canvas = document.getElementById('game');
@@ -16,6 +17,8 @@ const npcs = new Npcs(world);
 const minimap = new Minimap(world);
 const items = new Items(world);
 const inventory = new Inventory();
+const toasts = new Toasts();
+inventory.onAdd = (id, n) => toasts.push('+' + n + ' ' + ItemById[id].name);
 
 // Progress is kept in localStorage; reading the property can itself throw.
 let storage = null;
@@ -95,6 +98,7 @@ function draw() {
   player.draw(ctx);
   minimap.draw(ctx, viewW, dpr, player, npcs.all, items.all);
   inventory.draw(ctx, viewH, dpr);
+  toasts.draw(ctx, viewH, dpr);
 }
 
 let last = performance.now();
@@ -104,6 +108,7 @@ function frame(now) {
   player.update(dt, input, world);
   npcs.update(dt, player, inventory);
   items.update(player, inventory);
+  toasts.update(dt);
   draw();
   requestAnimationFrame(frame);
 }

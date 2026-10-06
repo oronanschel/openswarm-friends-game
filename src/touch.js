@@ -92,7 +92,12 @@ export class TouchControls {
   }
 
   down(e) {
-    if (e.pointerType === 'mouse') return;
+    if (e.pointerType === 'mouse') {
+      // A mouse can click the Dark button and nothing else here.
+      const { width, height } = this.view();
+      if (buttonAt(e.clientX, e.clientY, width, height)?.code === DarkButton.code) this.press(DarkButton.code);
+      return;
+    }
     e.preventDefault();
     this.active = true;
     const { width, height } = this.view();
@@ -124,14 +129,15 @@ export class TouchControls {
 
   // In CSS pixels; all context state is restored afterwards.
   draw(ctx, viewWidth, viewHeight, dpr) {
-    if (!this.active) return;
+    // Before the first touch only the Dark button shows, for the mouse.
+    const shown = this.active ? [HelpButton, DarkButton, ...buttonRects(viewWidth, viewHeight)] : [DarkButton];
     ctx.save();
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.font = 'bold 13px sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.lineWidth = 1;
-    for (const r of [HelpButton, DarkButton, ...buttonRects(viewWidth, viewHeight)]) {
+    for (const r of shown) {
       ctx.fillStyle = 'rgba(0, 0, 0, 0.55)';
       ctx.fillRect(r.x, r.y, r.w, r.h);
       ctx.strokeStyle = '#ddd';

@@ -48,7 +48,11 @@ inventory.onAdd = (id, n) => {
 };
 const state = { world, player, inventory, items, npcs, dayNight, darkMode };
 load(storage, state);
-sound.setDrone(darkMode.on);
+// A saved dark mode wants its hum, but audio may only start after a gesture.
+sound.wantDrone = darkMode.on;
+const startHum = () => sound.syncDrone();
+window.addEventListener('keydown', startHum, { once: true });
+window.addEventListener('pointerdown', startHum, { once: true });
 let resetting = false;
 const autosave = () => {
   if (!resetting) save(storage, state);

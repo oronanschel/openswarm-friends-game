@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { TouchControls, Buttons, HelpButton, buttonRects, buttonAt, stickKeys } from '../src/touch.js';
+import { TouchControls, Buttons, HelpButton, DarkButton, buttonRects, buttonAt, stickKeys } from '../src/touch.js';
 import { hotbarLayout } from '../src/inventory.js';
 import { Recipes, RECIPES_BOTTOM } from '../src/crafting.js';
 import { Player } from '../src/player.js';
@@ -207,7 +207,14 @@ test('a mouse is ignored and the controls stay hidden', () => {
   assert.deepEqual([...input], []);
   const calls = [];
   controls.draw(new Proxy({}, { get: () => () => calls.push(1) }), 360, 640, 1);
-  assert.equal(calls.length, 0);
+  // Only the Dark button shows before a touch, and a mouse can click it.
+  assert.equal(calls.length > 0, true);
+  const filled = [];
+  controls.draw(new Proxy({}, { get: (_, name) => (...args) => name === 'fillText' && filled.push(args[0]) }), 360, 640, 1);
+  assert.deepEqual(filled, ['Dark']);
+  fire('pointerdown', 1, DarkButton.x + 5, DarkButton.y + 5, 'mouse');
+  assert.deepEqual(pressed, ['KeyN']);
+  assert.equal(controls.active, false);
 });
 
 test('a drag actually moves the player', () => {

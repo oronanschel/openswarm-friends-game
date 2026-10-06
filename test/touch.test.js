@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { TouchControls, Buttons, buttonRects, buttonAt, stickKeys } from '../src/touch.js';
+import { TouchControls, Buttons, HelpButton, buttonRects, buttonAt, stickKeys } from '../src/touch.js';
 import { hotbarLayout } from '../src/inventory.js';
-import { Recipes } from '../src/crafting.js';
+import { Recipes, RECIPES_BOTTOM } from '../src/crafting.js';
 import { Player } from '../src/player.js';
 import { TILE } from '../src/world.js';
 
@@ -135,6 +135,26 @@ test('the Mute button sends the M key', () => {
   assert.equal(controls.stick, null);
 });
 
+test('the ? button sends the H key that shows the help', () => {
+  const { pressed, fire, controls } = setup();
+  fire('pointerdown', 1, HelpButton.x + 22, HelpButton.y + 22);
+  assert.deepEqual(pressed, ['KeyH']);
+  assert.equal(controls.stick, null);
+});
+
+test('the ? button sits under the recipe panel, clear of everything else', () => {
+  assert.ok(HelpButton.y >= RECIPES_BOTTOM);
+  assert.ok(HelpButton.w >= 44 && HelpButton.h >= 44);
+  const apart = (a, b) => a.x + a.w <= b.x || b.x + b.w <= a.x || a.y + a.h <= b.y || b.y + b.h <= a.y;
+  for (let width = 320; width <= 1000; width += 20) {
+    for (let height = 300; height <= 900; height += 20) {
+      for (const r of buttonRects(width, height)) assert.ok(apart(HelpButton, r), `${r.label} at ${width}x${height}`);
+      // The hotbar's top edge, from the bottom of the view.
+      assert.ok(HelpButton.y + HelpButton.h <= height - hotbarLayout(width).top, `hotbar at ${width}x${height}`);
+    }
+  }
+});
+
 test('dragging holds arrow codes and lifting releases them', () => {
   const { controls, input, fire } = setup();
   fire('pointerdown', 1, 100, 300);
@@ -212,7 +232,7 @@ test('drawing restores context state', () => {
   controls.draw(ctx, 360, 640, 2);
   assert.equal(calls[0].name, 'save');
   assert.equal(calls.at(-1).name, 'restore');
-  assert.equal(calls.filter((c) => c.name === 'fillText').length, Buttons.length);
+  assert.equal(calls.filter((c) => c.name === 'fillText').length, Buttons.length + 1);
   // The knob is clamped to the ring: 48px right of where the finger went down.
   const knob = calls.filter((c) => c.name === 'arc').at(-1);
   assert.deepEqual(knob.args.slice(0, 2), [148, 300]);

@@ -12,7 +12,7 @@ export const HelpLines = [
   'Goal: make 5 friends',
 ];
 const TITLE = 'How to play';
-const FOOTER = 'Press any key or tap to close. H brings this back.';
+const FOOTER = 'Press any key or tap to close. H or ? brings this back.';
 
 const LINE = 19;
 const PAD = 14;

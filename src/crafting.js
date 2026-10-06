@@ -46,6 +46,10 @@ export function recipeInputs(inventory, recipe) {
   });
 }
 
+// How far down the view the panel reaches with its footer line, in CSS
+// pixels, for other HUD parts to sit below it.
+export const RECIPES_BOTTOM = MARGIN + PAD * 2 + LINE * (Recipes.length + 2);
+
 // Recipe list at the top-left, in CSS pixels, with an optional `footer` line
 // (e.g. the friend count); all context state is restored. `compact` (for
 // narrow windows) replaces the recipe lines with one short line per recipe.

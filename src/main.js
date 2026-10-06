@@ -123,7 +123,12 @@ window.addEventListener('keydown', (e) => {
   if (e.code !== 'KeyH') help.dismiss();
   else if (!e.repeat) help.toggle();
 });
-canvas.addEventListener('pointerdown', () => help.dismiss());
+// Whether the tap being handled closed the help: then a tap on the ? button
+// has done its job, and must not open the help again.
+let tapClosedHelp = false;
+canvas.addEventListener('pointerdown', () => {
+  tapClosedHelp = help.dismiss();
+});
 
 // Canvas backing store is in device pixels; drawing uses CSS pixels.
 let viewW = 0;
@@ -134,6 +139,7 @@ const touch = new TouchControls(
   canvas,
   input,
   (code) => {
+    if (code === 'KeyH' && tapClosedHelp) return;
     window.dispatchEvent(new KeyboardEvent('keydown', { code }));
     window.dispatchEvent(new KeyboardEvent('keyup', { code }));
   },

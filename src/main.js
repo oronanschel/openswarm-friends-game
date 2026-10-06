@@ -66,7 +66,7 @@ function draw() {
   items.draw(ctx);
   npcs.draw(ctx);
   player.draw(ctx);
-  minimap.draw(ctx, viewW, dpr, player, npcs.all);
+  minimap.draw(ctx, viewW, dpr, player, npcs.all, items.all);
   inventory.draw(ctx, viewH, dpr);
 }
 

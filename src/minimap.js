@@ -33,7 +33,7 @@ export class Minimap {
   }
 
   // Draws in screen space (CSS pixels) at the top-right corner; replaces the canvas transform.
-  draw(ctx, viewWidth, dpr, player, npcs = []) {
+  draw(ctx, viewWidth, dpr, player, npcs = [], items = []) {
     const tx = Math.floor(player.x / TILE);
     const ty = Math.floor(player.y / TILE);
     if (tx !== this.tx || ty !== this.ty) this.refresh(tx, ty);
@@ -44,13 +44,16 @@ export class Minimap {
     ctx.imageSmoothingEnabled = false; // keep tiles crisp when the buffer is scaled up
     ctx.drawImage(this.buffer, left, top);
 
-    ctx.fillStyle = '#ffffff';
-    for (const npc of npcs) {
-      const dx = Math.floor(npc.x / TILE) - tx;
-      const dy = Math.floor(npc.y / TILE) - ty;
-      if (Math.abs(dx) > HALF || Math.abs(dy) > HALF) continue;
+    const dot = (entity, color) => {
+      const dx = Math.floor(entity.x / TILE) - tx;
+      const dy = Math.floor(entity.y / TILE) - ty;
+      if (Math.abs(dx) > HALF || Math.abs(dy) > HALF) return;
+      ctx.fillStyle = color;
       ctx.fillRect(left + (dx + HALF) * SCALE, top + (dy + HALF) * SCALE, SCALE, SCALE);
-    }
+    };
+    // Items first, so a villager standing on one stays visible.
+    for (const item of items) dot(item, item.type.color);
+    for (const npc of npcs) dot(npc, '#ffffff');
 
     ctx.fillStyle = '#f2e14c';
     ctx.fillRect(left + HALF * SCALE - 1, top + HALF * SCALE - 1, SCALE + 2, SCALE + 2);

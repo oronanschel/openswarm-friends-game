@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { buttonRects } from '../src/touch.js';
+import { buttonRects, HelpButton } from '../src/touch.js';
 
 // Boots the real src/main.js against stand-ins for the browser and drives it.
 // It cannot say how anything looks, only that the entry point wires the
@@ -216,6 +216,24 @@ test('the game runs at a fractional zoom on a narrow window and follows a resize
   pointer('pointerdown', button.x + button.w / 2, button.y + button.h / 2);
   pointer('pointerup', button.x + button.w / 2, button.y + button.h / 2);
   assert.deepEqual(pressed, [button.code]);
+
+  // The ? button opens the help, and a second tap on it closes it again.
+  const tapHelp = () => {
+    pointer('pointerdown', HelpButton.x + HelpButton.w / 2, HelpButton.y + HelpButton.h / 2);
+    pointer('pointerup', HelpButton.x + HelpButton.w / 2, HelpButton.y + HelpButton.h / 2);
+  };
+  const framesText = () => {
+    const before = game.counts.fillText;
+    game.run(1);
+    return game.counts.fillText - before;
+  };
+  const closedText = framesText();
+  tapHelp();
+  assert.deepEqual(pressed, [button.code, 'KeyH']);
+  assert.ok(framesText() >= closedText + 5, 'the help panel is drawn');
+  tapHelp();
+  assert.deepEqual(pressed, [button.code, 'KeyH']);
+  assert.equal(framesText(), closedText);
 
   game.window.innerWidth = 700;
   game.window.innerHeight = 320;

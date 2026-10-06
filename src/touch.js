@@ -1,4 +1,5 @@
 import { hotbarLayout } from './inventory.js';
+import { RECIPES_BOTTOM } from './crafting.js';
 
 const DEADZONE = 12; // CSS pixels the finger must travel before the player moves
 const STICK_RADIUS = 48; // drawn size of the joystick ring
@@ -46,8 +47,13 @@ export function buttonRects(viewWidth, viewHeight) {
   }));
 }
 
+// The help button stands apart from the action buttons, at the left edge just
+// under the recipe panel: it is looked for rarely, and out of the thumb's way
+// it cannot be hit by mistake. Its place does not depend on the view size.
+export const HelpButton = { label: '?', code: 'KeyH', x: MARGIN, y: RECIPES_BOTTOM + GAP, w: BUTTON, h: BUTTON };
+
 export function buttonAt(x, y, viewWidth, viewHeight) {
-  return buttonRects(viewWidth, viewHeight).find((r) => x >= r.x && x < r.x + r.w && y >= r.y && y < r.y + r.h) || null;
+  return [HelpButton, ...buttonRects(viewWidth, viewHeight)].find((r) => x >= r.x && x < r.x + r.w && y >= r.y && y < r.y + r.h) || null;
 }
 
 // Arrow-key codes for a drag of (dx, dy) from where the finger went down:
@@ -122,7 +128,7 @@ export class TouchControls {
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.lineWidth = 1;
-    for (const r of buttonRects(viewWidth, viewHeight)) {
+    for (const r of [HelpButton, ...buttonRects(viewWidth, viewHeight)]) {
       ctx.fillStyle = 'rgba(0, 0, 0, 0.55)';
       ctx.fillRect(r.x, r.y, r.w, r.h);
       ctx.strokeStyle = '#ddd';

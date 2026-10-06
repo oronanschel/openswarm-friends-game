@@ -72,3 +72,46 @@ test('a boosted player still stops flush against a wall', () => {
   assert.ok(player.x + RADIUS < TILE * 2);
   assert.ok(TILE * 2 - (player.x + RADIUS) < 0.01);
 });
+
+test('update reports the end of a boost exactly once', () => {
+  const player = new Player(0, 0);
+  const inventory = new Inventory();
+  inventory.add(JAM.id);
+  const idle = new Set();
+  // Never boosted: nothing to report.
+  assert.equal(player.update(0.1, idle, open), false);
+  player.eat(inventory, JAM);
+  let ends = 0;
+  for (let t = 0; t < BOOST_SECONDS * 10 + 20; t++) {
+    if (player.update(0.1, idle, open)) ends++;
+  }
+  assert.equal(ends, 1);
+});
+
+// Records arc() calls; every other canvas method is a no-op.
+function arcs(player) {
+  const calls = [];
+  const ctx = new Proxy(
+    { arc: (...args) => calls.push(args) },
+    { get: (target, name) => (name in target ? target[name] : () => {}), set: () => true }
+  );
+  player.draw(ctx);
+  return calls;
+}
+
+test('a ring is drawn only while boosted and shrinks with the time left', () => {
+  const player = new Player(0, 0);
+  const inventory = new Inventory();
+  inventory.add(JAM.id);
+  assert.equal(arcs(player).length, 1);
+  player.eat(inventory, JAM);
+  const full = arcs(player);
+  assert.equal(full.length, 2);
+  assert.ok(full[1][2] > RADIUS);
+  assert.ok(Math.abs(full[1][4] - full[1][3] - Math.PI * 2) < 1e-9);
+  player.update(BOOST_SECONDS / 2, new Set(), open);
+  const half = arcs(player)[1];
+  assert.ok(Math.abs(half[4] - half[3] - Math.PI) < 1e-9);
+  player.update(BOOST_SECONDS, new Set(), open);
+  assert.equal(arcs(player).length, 1);
+});

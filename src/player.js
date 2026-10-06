@@ -22,8 +22,10 @@ export class Player {
     return true;
   }
 
+  // Returns true on the one update in which a boost runs out.
   update(dt, input, world) {
-    const speed = this.boost > 0 ? SPEED * BOOST : SPEED;
+    const boosted = this.boost > 0;
+    const speed = boosted ? SPEED * BOOST : SPEED;
     this.boost = Math.max(0, this.boost - dt);
     let dx = 0;
     let dy = 0;
@@ -38,6 +40,7 @@ export class Player {
     // Move each axis separately so the player slides along walls.
     this.x = this.moveAxis(this.x, dx * speed * dt, (x) => this.collides(x, this.y, world));
     this.y = this.moveAxis(this.y, dy * speed * dt, (y) => this.collides(this.x, y, world));
+    return boosted && this.boost === 0;
   }
 
   // Move along one axis; if blocked, stop flush against the wall edge.
@@ -69,6 +72,13 @@ export class Player {
     ctx.fill();
     ctx.strokeStyle = '#3a2f00';
     ctx.lineWidth = 2;
+    ctx.stroke();
+    if (this.boost <= 0) return;
+    // A ring that empties clockwise from the top as the boost runs down.
+    ctx.strokeStyle = '#ce93d8';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, RADIUS + 5, -Math.PI / 2, -Math.PI / 2 + (this.boost / BOOST_SECONDS) * Math.PI * 2);
     ctx.stroke();
   }
 }

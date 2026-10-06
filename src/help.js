@@ -3,8 +3,9 @@ const KEY = 'friends-game-help-seen';
 export const HelpLines = [
   'Walk: WASD or arrows (drag on touch)',
   'Pick up berries, stones and shells',
-  'Craft: 1, 2, 3 (recipes at top-left)',
+  'Craft: 1, 2, 3, 4 (recipes at top-left)',
   'Chop a tree: Space, with a Stone Axe',
+  'Trees give Wood; a Raft crosses water',
   'Make a friend: E, with a Shell Necklace',
   'Eat Berry Jam: F, for a speed boost',
   'Mute: M      Start over: Shift+R',

@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { TouchControls, Buttons, buttonRects, buttonAt, stickKeys } from '../src/touch.js';
 import { hotbarLayout } from '../src/inventory.js';
+import { Recipes } from '../src/crafting.js';
 import { Player } from '../src/player.js';
 import { TILE } from '../src/world.js';
 
@@ -65,15 +66,36 @@ test('on a short window the buttons use three columns and stay below the minimap
     }
   }
   // The tall layout also clears the minimap from its threshold up.
-  assert.ok(buttonRects(360, 542).every((r) => r.y >= 174));
+  assert.ok(buttonRects(640, 594).every((r) => r.y >= 174));
 });
 
 test('between the two, columns of four clear the minimap at every height', () => {
   for (let height = 0; height <= 700; height++) {
     const rects = buttonRects(640, height);
     if (height >= 386) assert.ok(rects.every((r) => r.y >= 174), `height ${height}`);
-    if (height >= 386 && height < 542) assert.equal(new Set(rects.map((r) => r.x)).size, 2, `height ${height}`);
+    if (height >= 386 && height < 594) assert.equal(new Set(rects.map((r) => r.x)).size, 2, `height ${height}`);
+    if (height >= 594) assert.equal(new Set(rects.map((r) => r.x)).size, 1, `height ${height}`);
   }
+});
+
+test('a 360x640 phone keeps all eight buttons in one column', () => {
+  const rects = buttonRects(360, 640);
+  assert.equal(rects.length, 8);
+  assert.equal(new Set(rects.map((r) => r.x)).size, 1);
+  assert.ok(rects.every((r) => r.y >= 174 && r.y + r.h <= 640));
+  // Top to bottom, as the README lists them.
+  const labels = [...rects].sort((a, b) => a.y - b.y).map((r) => r.label);
+  assert.deepEqual(labels, ['Mute', '1', '2', '3', '4', 'Eat', 'E', 'Chop']);
+});
+
+test('the 4 button sends the key that crafts the raft', () => {
+  const { fire, pressed } = setup();
+  const four = buttonRects(VIEW.width, VIEW.height).find((r) => r.label === '4');
+  fire('pointerdown', 1, four.x + 5, four.y + 5);
+  assert.deepEqual(pressed, ['Digit4']);
+  assert.ok(Recipes.some((recipe) => recipe.key === 'Digit4'));
+  // Every recipe has a button.
+  for (const recipe of Recipes) assert.ok(Buttons.some((button) => button.code === recipe.key), recipe.key);
 });
 
 test('no button touches the hotbar or the minimap, however narrow the window', () => {

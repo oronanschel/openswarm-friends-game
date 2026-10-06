@@ -6,6 +6,7 @@ import { Npcs } from '../src/npc.js';
 import { Items, ItemTypes } from '../src/items.js';
 import { Inventory } from '../src/inventory.js';
 import { save, load, clear, serialize } from '../src/save.js';
+import { DayNight } from '../src/daynight.js';
 
 function fakeStorage() {
   const data = new Map();
@@ -119,6 +120,22 @@ test('missing, corrupt or unavailable storage never throws', () => {
   clear(null);
   const full = { setItem: () => { throw new Error('quota'); } };
   assert.equal(save(full, newState()), false);
+});
+
+test('the time of day is saved and restored', () => {
+  const storage = fakeStorage();
+  save(storage, { ...newState(), dayNight: new DayNight(130) });
+  const b = { ...newState(), dayNight: new DayNight() };
+  assert.equal(load(storage, b), true);
+  assert.equal(b.dayNight.time, 130);
+});
+
+test('a save without a time leaves the clock at morning', () => {
+  const storage = fakeStorage();
+  save(storage, newState());
+  const b = { ...newState(), dayNight: new DayNight() };
+  assert.equal(load(storage, b), true);
+  assert.equal(b.dayNight.time, 0);
 });
 
 test('clear removes the save', () => {

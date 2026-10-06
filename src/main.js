@@ -2,6 +2,8 @@ import { World, TILE } from './world.js';
 import { Player } from './player.js';
 import { Npcs } from './npc.js';
 import { Minimap } from './minimap.js';
+import { Items } from './items.js';
+import { Inventory } from './inventory.js';
 
 const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
@@ -11,6 +13,8 @@ const spawn = world.findSpawn();
 const player = new Player(spawn.x, spawn.y);
 const npcs = new Npcs(world);
 const minimap = new Minimap(world);
+const items = new Items(world);
+const inventory = new Inventory();
 
 const input = new Set();
 window.addEventListener('keydown', (e) => input.add(e.code));
@@ -59,9 +63,11 @@ function draw() {
   }
 
   ctx.setTransform(dpr, 0, 0, dpr, -camXd, -camYd);
+  items.draw(ctx);
   npcs.draw(ctx);
   player.draw(ctx);
   minimap.draw(ctx, viewW, dpr, player, npcs.all);
+  inventory.draw(ctx, viewH, dpr);
 }
 
 let last = performance.now();
@@ -70,6 +76,7 @@ function frame(now) {
   last = now;
   player.update(dt, input, world);
   npcs.update(dt, player);
+  items.update(player, inventory);
   draw();
   requestAnimationFrame(frame);
 }

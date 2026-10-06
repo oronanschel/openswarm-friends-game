@@ -222,7 +222,9 @@ function draw() {
   // through the darkness. (There are no zombies unless dark mode is on.)
   zombies.drawEyes(ctx);
   if (darkMode.on) npcs.drawBubbles(ctx);
-  minimap.draw(ctx, viewW, dpr, player, npcs.all, items.all);
+  // In the dark there is no map: only static, you and any zombie close by.
+  if (darkMode.on) minimap.drawDark(ctx, viewW, dpr, player, zombies.all, darkMode.time);
+  else minimap.draw(ctx, viewW, dpr, player, npcs.all, items.all);
   inventory.draw(ctx, viewH, dpr, viewW);
   // Below this width the full recipe panel would run into the minimap.
   const narrow = viewW < 460;

@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { Help, HelpLines } from '../src/help.js';
+import { Recipes } from '../src/crafting.js';
 
 function fakeStorage() {
   const data = new Map();
@@ -90,5 +91,8 @@ test('a hidden panel draws nothing', () => {
 
 test('the lines mention every key the game listens for', () => {
   const text = HelpLines.join(' ');
-  for (const key of ['WASD', '1, 2, 3', 'Space', 'E,', 'F,', 'M', 'Shift+R']) assert.ok(text.includes(key), key);
+  for (const key of ['WASD', 'Space', 'E,', 'F,', 'M', 'Shift+R']) assert.ok(text.includes(key), key);
+  // Each recipe's number key is listed, however many recipes there are.
+  for (const recipe of Recipes) assert.ok(text.includes(recipe.key.replace('Digit', '')), recipe.key);
+  assert.ok(text.includes('Raft') && text.includes('Wood'));
 });

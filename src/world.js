@@ -8,6 +8,7 @@ export const Tiles = {
   SAND: { id: 1, color: '#d8c47a', solid: false },
   GRASS: { id: 2, color: '#4f9a3a', solid: false },
   TREE: { id: 3, color: '#25602a', solid: true },
+  STUMP: { id: 4, color: '#7a5a34', solid: false },
 };
 
 export const TileById = [];
@@ -43,6 +44,45 @@ export class World {
     this.chunks = new Map();
     this.lastKey = null;
     this.lastChunk = null;
+    // Tiles changed by the player: chunk key -> Map(index in chunk -> tile id).
+    // Kept apart from `chunks` so changes survive eviction; save/load persists them.
+    this.overrides = new Map();
+  }
+
+  // Replace the generated tile at (tx, ty) for good.
+  setTile(tx, ty, tile) {
+    const cx = Math.floor(tx / CHUNK);
+    const cy = Math.floor(ty / CHUNK);
+    const key = cx + ',' + cy;
+    const index = (ty - cy * CHUNK) * CHUNK + (tx - cx * CHUNK);
+    let changed = this.overrides.get(key);
+    if (!changed) this.overrides.set(key, (changed = new Map()));
+    changed.set(index, tile.id);
+    const chunk = this.chunks.get(key);
+    if (chunk) chunk[index] = tile.id;
+  }
+
+  // Every changed tile as [tx, ty, id], for save/load.
+  changedTiles() {
+    const out = [];
+    for (const [key, changed] of this.overrides) {
+      const [cx, cy] = key.split(',').map(Number);
+      for (const [index, id] of changed) {
+        out.push([cx * CHUNK + (index % CHUNK), cy * CHUNK + Math.floor(index / CHUNK), id]);
+      }
+    }
+    return out;
+  }
+
+  // Replace all changes with a list from changedTiles(); unknown ids are skipped.
+  restoreTiles(list) {
+    this.overrides.clear();
+    this.chunks.clear();
+    this.lastKey = null;
+    this.lastChunk = null;
+    for (const [tx, ty, id] of list) {
+      if (Number.isInteger(tx) && Number.isInteger(ty) && TileById[id]) this.setTile(tx, ty, TileById[id]);
+    }
   }
 
   tileAt(tx, ty) {
@@ -77,6 +117,8 @@ export class World {
         ids[y * CHUNK + x] = this.generate(cx * CHUNK + x, cy * CHUNK + y).id;
       }
     }
+    const changed = this.overrides.get(cx + ',' + cy);
+    if (changed) for (const [index, id] of changed) ids[index] = id;
     return ids;
   }
 

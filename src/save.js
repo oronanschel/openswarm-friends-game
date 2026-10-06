@@ -13,6 +13,7 @@ export function serialize({ world, player, inventory, items, npcs }) {
     collected: [...items.collected],
     gifted: [...(npcs.gifted || [])],
     friends: [...(npcs.friends || [])],
+    tiles: world.changedTiles(),
   };
 }
 
@@ -21,6 +22,9 @@ export function serialize({ world, player, inventory, items, npcs }) {
 export function apply(data, { world, player, inventory, items, npcs }) {
   if (!data || data.version !== VERSION || data.seed !== world.seed) return false;
 
+  // Changed tiles first: the saved position may stand where a tree used to be.
+  // Saves from before tiles could change have no list.
+  world.restoreTiles(Array.isArray(data.tiles) ? data.tiles : []);
   const { x, y } = data.player || {};
   // Keep the fresh spawn if the saved spot is unusable.
   if (Number.isFinite(x) && Number.isFinite(y) && !player.collides(x, y, world)) {

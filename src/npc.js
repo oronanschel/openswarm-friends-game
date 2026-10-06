@@ -17,6 +17,18 @@ const LINES = [
   'I am sure I left my boat around here.',
   'The sand is warm today.',
 ];
+// What villagers say in dark mode: LINES[i] becomes SPOOKY_LINES[i].
+export const SPOOKY_LINES = [
+  'Did you hear that, in the dark?',
+  'The water is not as empty as it looks.',
+  'Do not go near the trees now.',
+  'Something shuffles in the east.',
+  'My boat... they took it.',
+  'The sand is cold tonight.',
+];
+const SPOOKY_GIFT = 'Take this... quickly, before they come.';
+const SPOOKY_FRIEND = 'Stay close, friend. Please.';
+const PALE = '#c9d3cf'; // the tint villagers fade towards in dark mode
 const COLORS = ['#d9534f', '#8e6bd1', '#e08a2e', '#3fb6c6'];
 const GIFT_CHANCE = 1 / 3;
 
@@ -52,6 +64,12 @@ function drawHeart(ctx, x, y, r) {
   ctx.lineWidth = 1;
   ctx.strokeStyle = '#1b1b1b';
   ctx.stroke();
+}
+
+// A colour halfway to PALE, as "rgb(r, g, b)".
+function paler(hex) {
+  const mix = (i) => Math.round((parseInt(hex.slice(i, i + 2), 16) + parseInt(PALE.slice(i, i + 2), 16)) / 2);
+  return `rgb(${mix(1)}, ${mix(3)}, ${mix(5)})`;
 }
 
 class Npc {
@@ -110,9 +128,11 @@ class Npc {
   }
 
   // Restores all context state (font, alignment, colours) afterwards.
-  draw(ctx) {
+  // `dark` is dark mode: paler villagers; their bubble is drawn separately,
+  // after the darkness, by drawBubble(ctx, true).
+  draw(ctx, dark = false) {
     ctx.save();
-    ctx.fillStyle = this.color;
+    ctx.fillStyle = dark ? paler(this.color) : this.color;
     ctx.beginPath();
     ctx.arc(this.x, this.y, RADIUS, 0, Math.PI * 2);
     ctx.fill();
@@ -121,14 +141,20 @@ class Npc {
     ctx.stroke();
     drawFace(ctx, this.x, this.y, this.faceX, this.faceY);
     if (this.friend) drawHeart(ctx, this.x + RADIUS, this.y - RADIUS, 5);
-    if (this.talking) this.drawBubble(ctx);
+    if (this.talking && !dark) this.drawBubble(ctx);
     ctx.restore();
   }
 
-  drawBubble(ctx) {
-    let line = this.line;
-    if (this.giving) line = 'Here, take this ' + this.given.name.toLowerCase() + '!';
-    else if (this.friend) line = 'Good to see you, friend!';
+  // The words shown over a talking villager.
+  say(dark = false) {
+    if (this.giving) return dark ? SPOOKY_GIFT : 'Here, take this ' + this.given.name.toLowerCase() + '!';
+    if (this.friend) return dark ? SPOOKY_FRIEND : 'Good to see you, friend!';
+    return dark ? SPOOKY_LINES[LINES.indexOf(this.line)] : this.line;
+  }
+
+  drawBubble(ctx, dark = false) {
+    ctx.save();
+    const line = this.say(dark);
     const text = this.name + ': ' + line;
     ctx.font = '13px sans-serif';
     ctx.textAlign = 'center';
@@ -137,13 +163,14 @@ class Npc {
     const h = 22;
     const bx = this.x - w / 2;
     const by = this.y - RADIUS - h - 8;
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.92)';
+    ctx.fillStyle = dark ? 'rgba(10, 6, 16, 0.92)' : 'rgba(255, 255, 255, 0.92)';
     ctx.fillRect(bx, by, w, h);
-    ctx.strokeStyle = '#1b1b1b';
+    ctx.strokeStyle = dark ? '#8fa89a' : '#1b1b1b';
     ctx.lineWidth = 1;
     ctx.strokeRect(bx, by, w, h);
-    ctx.fillStyle = '#1b1b1b';
+    ctx.fillStyle = dark ? '#d8e6dd' : '#1b1b1b';
     ctx.fillText(text, this.x, by + h / 2);
+    ctx.restore();
   }
 }
 
@@ -258,9 +285,17 @@ export class Npcs {
     }
   }
 
-  draw(ctx) {
+  draw(ctx, dark = false) {
     for (const npcs of this.regions.values()) {
-      for (const npc of npcs) npc.draw(ctx);
+      for (const npc of npcs) npc.draw(ctx, dark);
+    }
+  }
+
+  // Dark mode only: the speech bubbles, drawn after the darkness so they stay
+  // readable. Without dark mode the bubbles come with draw().
+  drawBubbles(ctx) {
+    for (const npcs of this.regions.values()) {
+      for (const npc of npcs) if (npc.talking) npc.drawBubble(ctx, true);
     }
   }
 }

@@ -72,6 +72,7 @@ class Npc {
     this.key = null; // "rx,ry,index": stable across region reloads
     this.gift = null; // item type handed over on first talk, if any
     this.giving = false; // true while showing the gift line
+    this.given = null; // the item named in that line
     this.friend = false; // mirrors Npcs.friends, refreshed every update
   }
 
@@ -126,7 +127,7 @@ class Npc {
 
   drawBubble(ctx) {
     let line = this.line;
-    if (this.giving) line = 'Here, take this ' + this.gift.name.toLowerCase() + '!';
+    if (this.giving) line = 'Here, take this ' + this.given.name.toLowerCase() + '!';
     else if (this.friend) line = 'Good to see you, friend!';
     const text = this.name + ': ' + line;
     ctx.font = '13px sans-serif';
@@ -154,6 +155,8 @@ export class Npcs {
     this.gifted = new Set();
     // Keys of NPCs befriended with a Shell Necklace; persisted by save/load.
     this.friends = new Set();
+    // Friend key -> the last day that friend gave a gift; persisted too.
+    this.friendGifts = new Map();
   }
 
   // Every NPC in a loaded region, for other systems such as the minimap.
@@ -206,7 +209,9 @@ export class Npcs {
   }
 
   // `inventory` is optional; without it NPCs talk but never hand over gifts.
-  update(dt, player, inventory) {
+  // `day` is the day count from the day/night clock; without it friends give
+  // no daily gifts.
+  update(dt, player, inventory, day) {
     const prx = Math.floor(player.x / TILE / REGION);
     const pry = Math.floor(player.y / TILE / REGION);
     for (let ry = pry - LOAD_RADIUS; ry <= pry + LOAD_RADIUS; ry++) {
@@ -228,9 +233,28 @@ export class Npcs {
         else if (inventory && npc.gift && !this.gifted.has(npc.key)) {
           inventory.add(npc.gift.id);
           this.gifted.add(npc.key);
+          npc.given = npc.gift;
           npc.giving = true;
         }
+        if (npc.friend && day !== undefined) this.dailyGift(npc, inventory, day);
       }
+    }
+  }
+
+  // A friend hands over one raw item the first time they are talked to on a
+  // new day. The day they became a friend (or were first seen as one, for
+  // older saves) counts as already given.
+  dailyGift(npc, inventory, day) {
+    const last = this.friendGifts.get(npc.key);
+    if (last === undefined || last > day) this.friendGifts.set(npc.key, day);
+    else if (last < day && npc.talking && inventory) {
+      // Fixed by villager and day, so reloading does not reroll it.
+      const [rx, ry, index] = npc.key.split(',').map(Number);
+      const pick = rng(Math.imul(rx, 2654435761) ^ Math.imul(ry, 40503) ^ Math.imul(index + 1, 97) ^ Math.imul(day, 7919));
+      npc.given = RawItems[Math.floor(pick() * RawItems.length)];
+      inventory.add(npc.given.id);
+      this.friendGifts.set(npc.key, day);
+      npc.giving = true;
     }
   }
 

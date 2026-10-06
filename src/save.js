@@ -17,6 +17,8 @@ export function serialize({ world, player, inventory, items, npcs, dayNight }) {
     friends: [...(npcs.friends || [])],
     tiles: world.changedTiles(),
     time: dayNight ? dayNight.time : 0,
+    day: dayNight ? dayNight.day : 0,
+    friendGifts: [...(npcs.friendGifts || [])],
   };
 }
 
@@ -43,6 +45,13 @@ export function apply(data, { world, player, inventory, items, npcs, dayNight })
   if (npcs.friends) npcs.friends = new Set(data.friends || []);
   // Saves from before the day/night cycle have no time: stay at morning.
   if (dayNight && Number.isFinite(data.time)) dayNight.time = ((data.time % CYCLE) + CYCLE) % CYCLE;
+  // Saves from before daily gifts have neither; friends then count as
+  // befriended on the day they are next seen.
+  if (dayNight && Number.isInteger(data.day) && data.day >= 0) dayNight.day = data.day;
+  if (npcs.friendGifts) {
+    const entries = Array.isArray(data.friendGifts) ? data.friendGifts : [];
+    npcs.friendGifts = new Map(entries.filter((e) => Array.isArray(e) && typeof e[0] === 'string' && Number.isInteger(e[1])));
+  }
   return true;
 }
 

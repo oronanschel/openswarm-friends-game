@@ -52,7 +52,7 @@ export function drawRecipes(ctx, inventory, dpr, footer = null, compact = false)
   Recipes.forEach((recipe, i) => {
     const inputs = recipe.inputs.map(([type, n]) => n + ' ' + type.name).join(' + ');
     const text = compact ? `[${i + 1}] ${recipe.output.name}` : `[${i + 1}] ${recipe.output.name} = ${inputs}`;
-    ctx.globalAlpha = canCraft(inventory, recipe) ? 1 : 0.4;
+    ctx.globalAlpha = canCraft(inventory, recipe) && !alreadyHave(inventory, recipe) ? 1 : 0.4;
     ctx.fillText(text, MARGIN + PAD, MARGIN + PAD + LINE * (i + 1));
   });
   if (footer) {

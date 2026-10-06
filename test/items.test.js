@@ -21,6 +21,7 @@ test('items spawn deterministically and never on solid tiles', () => {
   assert.deepEqual(keys(a), keys(b));
   for (const item of a.all) {
     assert.equal(world.isSolid(item.x, item.y), false);
+    assert.ok(world.hasRoom(Math.floor(item.x / TILE), Math.floor(item.y / TILE), 16), 'item is boxed in');
   }
 });
 
@@ -43,6 +44,18 @@ test('walking onto an item picks it up and it stays gone after reload', () => {
   items.update({ x: target.x + 2 * TILE * 16, y: target.y }, inventory);
   assert.equal(items.regions.has(region), true);
   assert.ok(!items.all.some((item) => item.key === target.key), 'collected item respawned');
+});
+
+test('inventory hotbar restores context state', () => {
+  const calls = [];
+  const ctx = new Proxy({}, {
+    get: (target, name) => (name in target ? target[name] : (...args) => calls.push(name)),
+    set: (target, name, value) => ((target[name] = value), true),
+  });
+  ctx.measureText = () => ({ width: 0 });
+  new Inventory().draw(ctx, 600, 2);
+  assert.equal(calls[0], 'save');
+  assert.equal(calls.at(-1), 'restore');
 });
 
 test('inventory counts accumulate', () => {

@@ -5,6 +5,7 @@ const LOAD_RADIUS = 2; // regions kept populated around the player
 const DENSITY = 0.015; // chance a walkable tile holds an item
 const PICKUP_DISTANCE = 18;
 const SIZE = 6;
+const MIN_ROOM = 16; // walkable tiles that must connect to an item's tile
 
 // Ids are stable: append new items, never renumber. Save/load relies on them.
 export const ItemTypes = {
@@ -46,7 +47,8 @@ export class Items {
         const key = tx + ',' + ty;
         if (this.collected.has(key)) continue;
         const tile = this.world.tileAt(tx, ty);
-        if (tile.solid) continue;
+        // Skip tiles boxed in by trees or water: the player could never reach them.
+        if (!this.world.hasRoom(tx, ty, MIN_ROOM)) continue;
         const roll = hash(tx, ty, this.world.seed + 1);
         const type = tile === Tiles.SAND ? ItemTypes.SHELL : roll < 0.6 ? ItemTypes.BERRY : ItemTypes.STONE;
         items.push({ key, type, x: (tx + 0.5) * TILE, y: (ty + 0.5) * TILE });

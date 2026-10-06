@@ -6,6 +6,17 @@ const SCALE = 2; // screen pixels per tile
 const SIZE = VIEW * SCALE;
 const MARGIN = 12;
 
+export const BLIP_RANGE = 10; // tiles: in dark mode a zombie this close shows
+
+// Offsets in tiles from the player of the zombies close enough to show on the
+// dark minimap, nearest first.
+export function zombieBlips(player, zombies) {
+  return zombies
+    .map((z) => ({ dx: Math.floor(z.x / TILE) - Math.floor(player.x / TILE), dy: Math.floor(z.y / TILE) - Math.floor(player.y / TILE) }))
+    .filter(({ dx, dy }) => Math.hypot(dx, dy) <= BLIP_RANGE)
+    .sort((a, b) => Math.hypot(a.dx, a.dy) - Math.hypot(b.dx, b.dy));
+}
+
 export class Minimap {
   constructor(world) {
     this.world = world;
@@ -36,6 +47,42 @@ export class Minimap {
     }
     this.tx = tx;
     this.ty = ty;
+  }
+
+  // Dark mode: no map. A box of grey static (a few dim specks that change
+  // about eight times a second, never a full-screen flash), the player at the
+  // centre, and a red blip for each zombie within BLIP_RANGE tiles. Replaces
+  // the canvas transform, like draw().
+  drawDark(ctx, viewWidth, dpr, player, zombies = [], time = 0) {
+    const left = viewWidth - SIZE - MARGIN;
+    const top = MARGIN;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.fillStyle = '#0b0b0e';
+    ctx.fillRect(left, top, SIZE, SIZE);
+    // A small seeded generator keyed to the current static frame.
+    let seed = Math.floor(time * 8) * 2654435761;
+    const next = () => {
+      seed = (Math.imul(seed ^ (seed >>> 15), 2246822519) + 0x9e3779b9) | 0;
+      return ((seed ^ (seed >>> 13)) >>> 0) / 4294967296;
+    };
+    for (let i = 0; i < 90; i++) {
+      const grey = 40 + Math.floor(next() * 50);
+      ctx.fillStyle = `rgb(${grey}, ${grey}, ${grey + 6})`;
+      ctx.fillRect(left + Math.floor(next() * (SIZE - 2)), top + Math.floor(next() * (SIZE - 2)), 2, 2);
+    }
+    const cx = left + SIZE / 2;
+    const cy = top + SIZE / 2;
+    for (const { dx, dy } of zombieBlips(player, zombies)) {
+      ctx.fillStyle = '#c4281f';
+      ctx.fillRect(cx + dx * SCALE - 2, cy + dy * SCALE - 2, 4, 4);
+    }
+    ctx.fillStyle = '#111';
+    ctx.fillRect(cx - 3, cy - 3, 6, 6);
+    ctx.fillStyle = '#f2e14c';
+    ctx.fillRect(cx - 2, cy - 2, 4, 4);
+    ctx.strokeStyle = '#111';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(left, top, SIZE, SIZE);
   }
 
   // Draws in screen space (CSS pixels) at the top-right corner; replaces the canvas transform.

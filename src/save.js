@@ -1,6 +1,6 @@
 import { CYCLE } from './daynight.js';
 
-const KEY ='friends-game-save';
+const KEY = 'friends-game-save';
 // Bump when the saved shape changes, or when world/item generation changes
 // enough that old positions or collected keys no longer mean the same thing.
 const VERSION = 1;

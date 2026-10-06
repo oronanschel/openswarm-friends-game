@@ -133,6 +133,11 @@ test('the time of day is saved and restored', () => {
 test('a save without a time leaves the clock at morning', () => {
   const storage = fakeStorage();
   save(storage, newState());
+  // Drop the field, as in a save from before the day/night cycle.
+  const [key, json] = [...storage.data][0];
+  const old = JSON.parse(json);
+  delete old.time;
+  storage.data.set(key, JSON.stringify(old));
   const b = { ...newState(), dayNight: new DayNight() };
   assert.equal(load(storage, b), true);
   assert.equal(b.dayNight.time, 0);

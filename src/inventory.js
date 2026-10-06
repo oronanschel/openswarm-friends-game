@@ -15,6 +15,15 @@ export class Inventory {
     if (this.onAdd) this.onAdd(id, n);
   }
 
+  // Removes n of an item; returns false and changes nothing if there are fewer.
+  remove(id, n = 1) {
+    const have = this.count(id);
+    if (have < n) return false;
+    if (have === n) this.counts.delete(id);
+    else this.counts.set(id, have - n);
+    return true;
+  }
+
   count(id) {
     return this.counts.get(id) || 0;
   }

@@ -5,6 +5,7 @@ import { Minimap } from './minimap.js';
 import { Items, ItemById } from './items.js';
 import { Inventory } from './inventory.js';
 import { Toasts } from './toasts.js';
+import { Recipes, craft, drawRecipes } from './crafting.js';
 import { save, load, clear } from './save.js';
 
 const canvas = document.getElementById('game');
@@ -47,6 +48,12 @@ window.addEventListener('keydown', (e) => {
   resetting = true;
   clear(storage);
   window.location.reload();
+});
+// Number keys craft the matching recipe.
+window.addEventListener('keydown', (e) => {
+  const recipe = Recipes.find((r) => r.key === e.code);
+  if (!recipe || e.repeat) return;
+  if (!craft(inventory, recipe)) toasts.push('Need ' + recipe.inputs.map(([type, n]) => n + ' ' + type.name).join(' + '));
 });
 window.addEventListener('keyup', (e) => input.delete(e.code));
 window.addEventListener('blur', () => input.clear());
@@ -98,6 +105,7 @@ function draw() {
   player.draw(ctx);
   minimap.draw(ctx, viewW, dpr, player, npcs.all, items.all);
   inventory.draw(ctx, viewH, dpr);
+  drawRecipes(ctx, inventory, dpr);
   toasts.draw(ctx, viewH, dpr);
 }
 

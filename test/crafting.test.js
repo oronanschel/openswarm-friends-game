@@ -4,7 +4,7 @@ import { Recipes, canCraft, craft, drawRecipes } from '../src/crafting.js';
 import { Inventory } from '../src/inventory.js';
 import { ItemTypes, ItemById, RawItems } from '../src/items.js';
 
-const { BERRY, STONE, SHELL, AXE } = ItemTypes;
+const { BERRY, STONE, SHELL, STONE_AXE: AXE } = ItemTypes;
 const axe = Recipes.find((r) => r.output === AXE);
 
 test('crafting consumes exactly the inputs and adds the output', () => {

@@ -13,7 +13,7 @@ export const ItemTypes = {
   STONE: { id: 1, name: 'Stone', color: '#9e9e9e' },
   SHELL: { id: 2, name: 'Shell', color: '#ffccbc' },
   // Crafted only; see crafting.js.
-  AXE: { id: 3, name: 'Stone Axe', color: '#6d4c41' },
+  STONE_AXE: { id: 3, name: 'Stone Axe', color: '#6d4c41' },
   NECKLACE: { id: 4, name: 'Shell Necklace', color: '#f8bbd0' },
   JAM: { id: 5, name: 'Berry Jam', color: '#7b1fa2' },
 };

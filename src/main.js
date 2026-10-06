@@ -12,6 +12,7 @@ import { chop } from './chop.js';
 import { TouchControls } from './touch.js';
 import { DayNight } from './daynight.js';
 import { Sound } from './sound.js';
+import { Help } from './help.js';
 import { groundColor, hasArt, drawTileArt } from './tileart.js';
 
 const canvas = document.getElementById('game');
@@ -36,6 +37,7 @@ try {
   // Play without saving.
 }
 const sound = new Sound(storage);
+const help = new Help(storage);
 // Picking up and crafting both add to the inventory.
 inventory.onAdd = (id, n) => {
   toasts.push('+' + n + ' ' + ItemById[id].name);
@@ -111,6 +113,13 @@ window.addEventListener('keydown', (e) => {
   toasts.push(sound.toggleMute() ? 'Sound off' : 'Sound on');
   sound.play('pickup');
 });
+// H shows or hides the help panel; any other key, or a tap, closes it. The
+// key still does its usual job.
+window.addEventListener('keydown', (e) => {
+  if (e.code !== 'KeyH') help.dismiss();
+  else if (!e.repeat) help.toggle();
+});
+canvas.addEventListener('pointerdown', () => help.dismiss());
 
 // Canvas backing store is in device pixels; drawing uses CSS pixels.
 let viewW = 0;
@@ -185,7 +194,8 @@ function draw() {
   drawRecipes(ctx, inventory, dpr, friends, narrow);
   toasts.draw(ctx, viewH, dpr);
   quest.draw(ctx, viewW, viewH, dpr);
-  // Last, so the buttons stay visible above the win banner.
+  help.draw(ctx, viewW, viewH, dpr);
+  // Last, so the buttons stay visible above the win banner and the help.
   touch.draw(ctx, viewW, viewH, dpr);
 }
 

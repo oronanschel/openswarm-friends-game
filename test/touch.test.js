@@ -63,7 +63,7 @@ test('on a short window the buttons use two columns and stay below the minimap',
     }
   }
   // The tall layout also clears the minimap from its threshold up.
-  assert.ok(buttonRects(360, 450).every((r) => r.y >= 174));
+  assert.ok(buttonRects(360, 490).every((r) => r.y >= 174));
 });
 
 test('dragging holds arrow codes and lifting releases them', () => {

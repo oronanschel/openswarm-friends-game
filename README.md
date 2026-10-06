@@ -15,13 +15,13 @@ python3 -m http.server 8000
 # then open http://localhost:8000
 ```
 
-Move with WASD or the arrow keys. Water and trees block movement. Walk up to a villager to hear what they have to say. Walk over berries, stones and shells to collect them into the hotbar at the bottom-left. Press 1, 2 or 3 to craft the recipes listed at the top-left. Press E while talking to a villager to give them a Shell Necklace and make a friend. Make 5 friends to complete the game's goal. Shells wash up on the sandy beaches.
+Move with WASD or the arrow keys. Water and trees block movement. Walk up to a villager to hear what they have to say. Walk over berries, stones and shells to collect them into the hotbar at the bottom-left. Press 1, 2 or 3 to craft the recipes listed at the top-left. Press F to eat a Berry Jam and walk faster for 20 seconds. Press E while talking to a villager to give them a Shell Necklace and make a friend. Make 5 friends to complete the game's goal. Shells wash up on the sandy beaches.
 
 With a stone axe in the inventory, press Space next to a tree to chop it down and open a path.
 
 The world has grassland and snow country; snowy regions grow pines, which block and chop like trees.
 
-On a touch screen, drag anywhere to walk and use the buttons at the bottom-right (1, 2, 3, E, Chop) in place of the keys.
+On a touch screen, drag anywhere to walk and use the buttons at the bottom-right (1, 2, 3, Eat, E, Chop) in place of the keys.
 
 Progress (position, inventory, what you have picked up and trees you have chopped) is saved in the browser every few seconds and restored on the next visit. Press Shift+R to wipe the save and start over.
 

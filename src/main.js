@@ -68,6 +68,12 @@ window.addEventListener('keydown', (e) => {
   if (!recipe || e.repeat) return;
   if (!craft(inventory, recipe)) toasts.push('Need ' + recipe.inputs.map(([type, n]) => n + ' ' + type.name).join(' + '));
 });
+// F eats a Berry Jam for a burst of speed.
+window.addEventListener('keydown', (e) => {
+  if (e.code !== 'KeyF' || e.repeat) return;
+  if (player.eat(inventory, ItemTypes.JAM)) toasts.push('Yum! Speed boost');
+  else toasts.push('Need Berry Jam');
+});
 window.addEventListener('keyup', (e) => input.delete(e.code));
 window.addEventListener('blur', () => input.clear());
 // E gives a Shell Necklace to the villager you are talking to, making a friend.

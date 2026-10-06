@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { DarkMode, DARK_RADIUS, flicker } from '../src/darkmode.js';
+import { DarkMode, DARK_RADIUS, MIN_RADIUS, flicker, lightRadius, blackout } from '../src/darkmode.js';
 import { Sound } from '../src/sound.js';
 import { World } from '../src/world.js';
 import { Player } from '../src/player.js';
@@ -138,4 +138,47 @@ test('the Dark button sends N, beside the help button and clear of the others', 
 
 test('the help panel mentions the key', () => {
   assert.ok(HelpLines.some((line) => line.includes('Dark mode: N')));
+});
+
+test('the light shrinks the longer it is dark, to a floor', () => {
+  const average = (from) => {
+    let sum = 0;
+    for (let t = from; t < from + 10; t += 0.05) sum += lightRadius(t);
+    return sum / 200;
+  };
+  assert.ok(average(0) > average(60) && average(60) > average(150));
+  assert.ok(average(400) > MIN_RADIUS * 0.8, 'it settles at the floor');
+  assert.ok(lightRadius(0) < DARK_RADIUS * 1.11 && lightRadius(0) > DARK_RADIUS * 0.89);
+});
+
+test('the light goes out briefly now and then, never in the first seconds, and never abruptly', () => {
+  for (let t = 0; t < 20; t += 0.05) assert.equal(blackout(t), 1);
+  let dips = 0;
+  let longest = 0;
+  let run = 0;
+  let previous = 1;
+  for (let t = 20; t < 300; t += 0.02) {
+    const b = blackout(t);
+    assert.ok(Math.abs(b - previous) < 0.1, 'no sudden jump at ' + t);
+    previous = b;
+    if (b < 0.9) run += 0.02;
+    else {
+      if (run) dips++;
+      longest = Math.max(longest, run);
+      run = 0;
+    }
+    assert.ok(b >= 0.2 - 1e-9);
+  }
+  assert.ok(dips >= 10, 'about one a window: ' + dips);
+  assert.ok(longest < 1, 'each is a split second: ' + longest);
+});
+
+test('turning dark mode on starts the light at full size again', () => {
+  const dark = new DarkMode();
+  dark.toggle();
+  dark.update(100);
+  assert.equal(dark.time, 100);
+  dark.toggle();
+  dark.toggle();
+  assert.equal(dark.time, 0);
 });

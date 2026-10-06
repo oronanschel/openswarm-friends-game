@@ -1,5 +1,6 @@
 import { TILE } from './world.js';
 import { ItemTypes, RawItems } from './items.js';
+import { drawFace } from './face.js';
 
 const REGION = 16; // tiles per side of a spawn region
 const LOAD_RADIUS = 2; // regions kept populated around the player
@@ -64,6 +65,9 @@ class Npc {
     this.dx = 0;
     this.dy = 0;
     this.timer = 0;
+    // Where the face looks: the way last walked, or at the player while talking.
+    this.faceX = 0;
+    this.faceY = 1;
     this.talking = false;
     this.key = null; // "rx,ry,index": stable across region reloads
     this.gift = null; // item type handed over on first talk, if any
@@ -73,7 +77,11 @@ class Npc {
 
   update(dt, player, world) {
     this.talking = Math.hypot(player.x - this.x, player.y - this.y) < TALK_DISTANCE;
-    if (this.talking) return;
+    if (this.talking) {
+      this.faceX = player.x - this.x;
+      this.faceY = player.y - this.y;
+      return;
+    }
 
     this.timer -= dt;
     if (this.timer <= 0) {
@@ -94,6 +102,10 @@ class Npc {
     const ny = this.y + this.dy * SPEED * dt;
     if (!collides(this.x, ny, world)) this.y = ny;
     else this.dy = -this.dy;
+    if (this.dx || this.dy) {
+      this.faceX = this.dx;
+      this.faceY = this.dy;
+    }
   }
 
   // Restores all context state (font, alignment, colours) afterwards.
@@ -106,6 +118,7 @@ class Npc {
     ctx.strokeStyle = '#1b1b1b';
     ctx.lineWidth = 2;
     ctx.stroke();
+    drawFace(ctx, this.x, this.y, this.faceX, this.faceY);
     if (this.friend) drawHeart(ctx, this.x + RADIUS, this.y - RADIUS, 5);
     if (this.talking) this.drawBubble(ctx);
     ctx.restore();

@@ -11,7 +11,8 @@ const MARGIN = 12;
 export function promptFor({ npc = null, hasNecklace = false, tree = null, hasAxe = false, touch = false } = {}) {
   if (npc && !npc.friend) {
     if (hasNecklace) return { key: 'E', text: 'Give ' + npc.name + ' a Shell Necklace' };
-    return { key: null, text: 'Bring ' + npc.name + ' a Shell Necklace to make friends' };
+    // Short, so it stays clear of the touch buttons on a phone.
+    return { key: null, text: npc.name + ' wants a Shell Necklace' };
   }
   if (tree && hasAxe) return { key: touch ? 'Chop' : 'Space', text: 'Chop tree' };
   return null;

@@ -17,7 +17,7 @@ test('a villager who is not yet a friend prompts for the necklace', () => {
   assert.deepEqual(promptFor({ npc: stranger, hasNecklace: true }), { key: 'E', text: 'Give Mira a Shell Necklace' });
   const hint = promptFor({ npc: stranger });
   assert.equal(hint.key, null);
-  assert.match(hint.text, /Mira.*Shell Necklace/);
+  assert.equal(hint.text, 'Mira wants a Shell Necklace');
   assert.equal(promptFor({ npc: friend, hasNecklace: true }), null);
 });
 

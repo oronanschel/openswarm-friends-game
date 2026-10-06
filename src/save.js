@@ -1,10 +1,12 @@
+import { CYCLE } from './daynight.js';
+
 const KEY = 'friends-game-save';
 // Bump when the saved shape changes, or when world/item generation changes
 // enough that old positions or collected keys no longer mean the same thing.
 const VERSION = 1;
 
-// state is { world, player, inventory, items, npcs }.
-export function serialize({ world, player, inventory, items, npcs }) {
+// state is { world, player, inventory, items, npcs, dayNight }; dayNight is optional.
+export function serialize({ world, player, inventory, items, npcs, dayNight }) {
   return {
     version: VERSION,
     seed: world.seed,
@@ -14,12 +16,13 @@ export function serialize({ world, player, inventory, items, npcs }) {
     gifted: [...(npcs.gifted || [])],
     friends: [...(npcs.friends || [])],
     tiles: world.changedTiles(),
+    time: dayNight ? dayNight.time : 0,
   };
 }
 
 // Copies a saved object into the live state. Returns false, changing nothing,
 // if the save is from another version or another world.
-export function apply(data, { world, player, inventory, items, npcs }) {
+export function apply(data, { world, player, inventory, items, npcs, dayNight }) {
   if (!data || data.version !== VERSION || data.seed !== world.seed) return false;
 
   // Changed tiles first: the saved position may stand where a tree used to be.
@@ -38,6 +41,8 @@ export function apply(data, { world, player, inventory, items, npcs }) {
   if (npcs.gifted) npcs.gifted = new Set(data.gifted || []);
   // Saves from before befriending have no list.
   if (npcs.friends) npcs.friends = new Set(data.friends || []);
+  // Saves from before the day/night cycle have no time: stay at morning.
+  if (dayNight && Number.isFinite(data.time)) dayNight.time = ((data.time % CYCLE) + CYCLE) % CYCLE;
   return true;
 }
 

@@ -34,7 +34,7 @@ try {
 } catch {
   // Play without saving.
 }
-const state = { world, player, inventory, items, npcs };
+const state = { world, player, inventory, items, npcs, dayNight };
 load(storage, state);
 let resetting = false;
 const autosave = () => {

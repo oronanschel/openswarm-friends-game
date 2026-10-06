@@ -1,11 +1,13 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { buttonRects } from '../src/touch.js';
 
 // Boots the real src/main.js against stand-ins for the browser and drives it.
 // It cannot say how anything looks, only that the entry point wires the
 // modules together without throwing and that the basic effects happen.
 
 const SAVE_KEY = 'friends-game-save';
+const HELP_KEY = 'friends-game-help-seen';
 
 // A 2D context that accepts any call or property and counts the calls.
 function fakeContext(counts) {
@@ -35,7 +37,7 @@ function fakeCanvas(counts) {
     style: {},
     handlers,
     getContext: () => context,
-    addEventListener: (name, fn) => (handlers[name] = fn),
+    addEventListener: (name, fn) => (handlers[name] ||= []).push(fn),
   };
 }
 
@@ -106,6 +108,7 @@ async function boot(tag, { width, height, dpr }) {
       }
     },
     saved: () => JSON.parse(data.get(SAVE_KEY) || 'null'),
+    stored: (key) => (data.has(key) ? data.get(key) : null),
   };
 }
 
@@ -129,7 +132,14 @@ test('the game boots, draws, moves, acts on every key and saves', async () => {
   const start = game.saved();
   assert.ok(start && Number.isFinite(start.player.x) && Number.isFinite(start.player.y));
 
+  // The help panel is up on a first visit and adds its text to each frame.
+  assert.equal(game.stored(HELP_KEY), null);
+  const withHelp = game.counts.fillText;
+  game.run(1);
+  const perFrameWithHelp = game.counts.fillText - withHelp;
+
   // Walk in each direction for a while; the player ends up somewhere else.
+  // The first key press also closes the help, and still moves the player.
   for (const code of ['KeyD', 'KeyS', 'ArrowLeft', 'ArrowUp', 'KeyD']) {
     game.key(code);
     game.run(40);
@@ -138,6 +148,24 @@ test('the game boots, draws, moves, acts on every key and saves', async () => {
   game.fire('pagehide');
   const moved = game.saved();
   assert.ok(moved.player.x !== start.player.x || moved.player.y !== start.player.y);
+  assert.equal(game.stored(HELP_KEY), '1');
+  const withoutHelp = game.counts.fillText;
+  game.run(1);
+  const perFrame = game.counts.fillText - withoutHelp;
+  assert.ok(perFrame < perFrameWithHelp, `${perFrame} < ${perFrameWithHelp}`);
+
+  // H brings the panel back and puts it away again. The panel is ten pieces
+  // of text; a toast or speech bubble coming or going is one or two.
+  game.key('KeyH');
+  game.release('KeyH');
+  const reopened = game.counts.fillText;
+  game.run(1);
+  const perFrameReopened = game.counts.fillText - reopened;
+  game.key('KeyH');
+  game.release('KeyH');
+  const closed = game.counts.fillText;
+  game.run(1);
+  assert.ok(perFrameReopened - (game.counts.fillText - closed) >= 5);
 
   // Every action key, with and without the means to do the action.
   for (const code of ['Digit1', 'Digit2', 'Digit3', 'KeyE', 'KeyF', 'KeyM', 'KeyM', 'Space']) {
@@ -168,20 +196,26 @@ test('the game runs at a fractional zoom on a narrow window and follows a resize
   game.run(5);
 
   // A touch brings up the on-screen buttons and steers the player.
-  const pointer = (name, x, y) =>
-    game.canvas.handlers[name]({ pointerId: 1, pointerType: 'touch', clientX: x, clientY: y, preventDefault() {} });
+  const pointer = (name, x, y) => {
+    const event = { pointerId: 1, pointerType: 'touch', clientX: x, clientY: y, preventDefault() {} };
+    game.canvas.handlers[name].forEach((fn) => fn(event));
+  };
+  // The first tap also closes the first-visit help panel.
+  assert.equal(game.stored(HELP_KEY), null);
   pointer('pointerdown', 120, 250);
+  assert.equal(game.stored(HELP_KEY), '1');
   pointer('pointermove', 60, 250);
   game.run(30);
   pointer('pointerup', 60, 250);
   game.run(2);
 
-  // Tapping the bottom-right corner reaches a button, which sends its key.
-  let presses = 0;
-  game.window.addEventListener('keydown', () => presses++);
-  pointer('pointerdown', 360 - 30, 500 - 12 - 48 - 20);
-  pointer('pointerup', 360 - 30, 500 - 12 - 48 - 20);
-  assert.equal(presses, 1);
+  // Tapping an on-screen button sends its key.
+  const pressed = [];
+  game.window.addEventListener('keydown', (e) => pressed.push(e.code));
+  const button = buttonRects(360, 500)[0];
+  pointer('pointerdown', button.x + button.w / 2, button.y + button.h / 2);
+  pointer('pointerup', button.x + button.w / 2, button.y + button.h / 2);
+  assert.deepEqual(pressed, [button.code]);
 
   game.window.innerWidth = 700;
   game.window.innerHeight = 320;

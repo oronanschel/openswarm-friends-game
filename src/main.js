@@ -6,6 +6,7 @@ import { Items, ItemById, ItemTypes } from './items.js';
 import { Inventory } from './inventory.js';
 import { Toasts } from './toasts.js';
 import { Recipes, craft, drawRecipes } from './crafting.js';
+import { Quest, GOAL } from './quest.js';
 import { save, load, clear } from './save.js';
 import { chop } from './chop.js';
 import { TouchControls } from './touch.js';
@@ -21,6 +22,7 @@ const minimap = new Minimap(world);
 const items = new Items(world);
 const inventory = new Inventory();
 const toasts = new Toasts();
+const quest = new Quest();
 inventory.onAdd = (id, n) => toasts.push('+' + n + ' ' + ItemById[id].name);
 
 // Progress is kept in localStorage; reading the property can itself throw.
@@ -72,7 +74,7 @@ window.addEventListener('keydown', (e) => {
   const npc = npcs.talkingTo(player);
   if (!npc || npc.friend) return;
   if (npcs.befriend(npc, inventory)) toasts.push(npc.name + ' is now your friend!');
-  else toasts.push('Craft a Shell Necklace to befriend ' + npc.name);
+  else toasts.push('Needs a Shell Necklace (shells: beaches)');
 });
 
 // Canvas backing store is in device pixels; drawing uses CSS pixels.
@@ -135,9 +137,12 @@ function draw() {
   inventory.draw(ctx, viewH, dpr);
   // Below this width the full recipe panel would run into the minimap.
   const narrow = viewW < 460;
-  const friends = 'Friends: ' + npcs.friends.size + (narrow ? '' : ' (E: give necklace)');
+  const hint = narrow || npcs.friends.size >= GOAL ? '' : ' (E: necklace)';
+  const friends = quest.progressText() + hint;
   drawRecipes(ctx, inventory, dpr, friends, narrow);
   toasts.draw(ctx, viewH, dpr);
+  quest.draw(ctx, viewW, viewH, dpr);
+  // Last, so the buttons stay visible above the win banner.
   touch.draw(ctx, viewW, viewH, dpr);
 }
 
@@ -149,6 +154,7 @@ function frame(now) {
   npcs.update(dt, player, inventory);
   items.update(player, inventory);
   toasts.update(dt);
+  quest.update(dt, npcs.friends.size);
   draw();
   requestAnimationFrame(frame);
 }

@@ -38,6 +38,13 @@ test('play makes one oscillator per note and reuses one context', () => {
   assert.equal(FakeAudio.oscillators, Effects.friend.length + Effects.pickup.length);
 });
 
+test('every effect has notes and the boost-end sound exists', () => {
+  assert.ok(Effects.boostEnd.length > 0);
+  for (const notes of Object.values(Effects)) {
+    for (const [freq, start, length] of notes) assert.ok(freq > 0 && start >= 0 && length > 0);
+  }
+});
+
 test('muting silences play and is remembered', () => {
   const storage = fakeStorage();
   const sound = new Sound(storage, FakeAudio);

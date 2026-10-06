@@ -2,9 +2,8 @@ import { World, TILE } from './world.js';
 import { Player } from './player.js';
 import { Npcs } from './npc.js';
 import { Minimap } from './minimap.js';
-import { Items } from './items.js';
+import { Items, ItemById } from './items.js';
 import { Inventory } from './inventory.js';
-import { ItemById } from './items.js';
 import { Toasts } from './toasts.js';
 import { save, load, clear } from './save.js';
 

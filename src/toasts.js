@@ -35,6 +35,7 @@ export class Toasts {
     ctx.textAlign = 'left';
     ctx.textBaseline = 'bottom';
     ctx.lineWidth = 3;
+    ctx.lineJoin = 'round'; // no mitre spikes on the outlined glyphs
     ctx.strokeStyle = 'rgba(0, 0, 0, 0.8)';
     ctx.fillStyle = '#fff';
     // Newest at the bottom.

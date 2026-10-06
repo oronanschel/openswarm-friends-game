@@ -39,10 +39,13 @@ export function tintAt(phase) {
 export class DayNight {
   constructor(time = 0) {
     this.time = time; // seconds into the current day; 0 is morning
+    this.day = 0; // mornings seen since the game began
   }
 
   update(dt) {
-    this.time = (this.time + dt) % CYCLE;
+    const time = this.time + dt;
+    this.day += Math.floor(time / CYCLE);
+    this.time = time % CYCLE;
   }
 
   get phase() {

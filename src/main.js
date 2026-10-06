@@ -207,7 +207,7 @@ function frame(now) {
     toasts.push('Speed boost ended');
     sound.play('boostEnd');
   }
-  npcs.update(dt, player, inventory);
+  npcs.update(dt, player, inventory, dayNight.day);
   items.update(player, inventory);
   toasts.update(dt);
   quest.update(dt, npcs.friends.size);

@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { TouchControls, Buttons, buttonRects, buttonAt, stickKeys } from '../src/touch.js';
-import { HOTBAR_RIGHT, HOTBAR_TOP } from '../src/inventory.js';
+import { hotbarLayout } from '../src/inventory.js';
 import { Player } from '../src/player.js';
 import { TILE } from '../src/world.js';
 
@@ -44,8 +44,9 @@ test('buttons sit on screen, do not overlap, and are found by position', () => {
     assert.equal(buttonAt(r.x + r.w / 2, r.y + r.h / 2, VIEW.width, VIEW.height).code, r.code);
   }
   for (let i = 1; i < rects.length; i++) assert.ok(rects[i].y + rects[i].h <= rects[i - 1].y);
-  // Clear of the 6-slot hotbar at the bottom-left, which ends at 288px.
-  assert.ok(rects[0].x >= 288);
+  // Clear of the hotbar at the bottom-left: beside it or above it.
+  const hotbar = hotbarLayout(VIEW.width);
+  assert.ok(rects[0].x >= hotbar.right || rects[0].y + rects[0].h <= VIEW.height - hotbar.top);
   assert.equal(buttonAt(10, 10, VIEW.width, VIEW.height), null);
 });
 
@@ -80,12 +81,13 @@ test('no button touches the hotbar or the minimap, however narrow the window', (
   for (let width = 320; width <= 700; width += 4) {
     for (let height = 382; height <= 700; height += 2) {
       const rects = buttonRects(width, height);
+      const hotbar = hotbarLayout(width);
       const at = `${width}x${height}`;
       assert.equal(new Set(rects.map((r) => r.x + ',' + r.y)).size, Buttons.length, at);
       for (const r of rects) {
         assert.ok(r.x >= 0 && r.x + r.w <= width && r.y + r.h <= height, at);
         assert.ok(r.y >= 174, at);
-        assert.ok(r.x >= HOTBAR_RIGHT || r.y + r.h <= height - HOTBAR_TOP, at);
+        assert.ok(r.x >= hotbar.right || r.y + r.h <= height - hotbar.top, at);
       }
     }
   }
@@ -94,12 +96,12 @@ test('no button touches the hotbar or the minimap, however narrow the window', (
 test('a narrow window lifts the buttons above the hotbar; a wide one does not', () => {
   // 360x500 used to put the second column's bottom button on the last slot.
   const narrow = buttonRects(360, 500);
-  assert.ok(narrow.every((r) => r.y + r.h <= 500 - HOTBAR_TOP));
+  assert.ok(narrow.every((r) => r.y + r.h <= 500 - hotbarLayout(360).top));
   assert.equal(new Set(narrow.map((r) => r.x)).size, 2);
   const wide = buttonRects(640, 500);
   assert.equal(wide[0].y + wide[0].h, 500 - 12);
   // One column that is already clear of the hotbar stays put.
-  const tall = buttonRects(HOTBAR_RIGHT + 12 + 44 + 12, 640);
+  const tall = buttonRects(hotbarLayout().right + 12 + 44 + 12, 640);
   assert.equal(tall[0].y + tall[0].h, 640 - 12);
 });
 

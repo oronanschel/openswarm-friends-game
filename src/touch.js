@@ -1,4 +1,4 @@
-import { HOTBAR_RIGHT, HOTBAR_TOP } from './inventory.js';
+import { hotbarLayout } from './inventory.js';
 
 const DEADZONE = 12; // CSS pixels the finger must travel before the player moves
 const STICK_RADIUS = 48; // drawn size of the joystick ring
@@ -25,12 +25,13 @@ const ROWS = [Buttons.length, 4, 3, 2];
 // four from 386px, then three (a phone on its side), then two. Where the
 // columns would reach the hotbar (a narrow window) the block sits above it.
 export function buttonRects(viewWidth, viewHeight) {
+  const hotbar = hotbarLayout(viewWidth);
   let rows;
   let lift;
   for (rows of ROWS) {
     const columns = Math.ceil(Buttons.length / rows);
     const left = viewWidth - MARGIN - BUTTON - (columns - 1) * (BUTTON + GAP);
-    lift = left < HOTBAR_RIGHT + GAP ? HOTBAR_TOP + GAP - MARGIN : 0;
+    lift = left < hotbar.right + GAP ? hotbar.top + GAP - MARGIN : 0;
     const top = viewHeight - MARGIN - lift - rows * (BUTTON + GAP) + GAP;
     if (top >= MINIMAP_BOTTOM) break;
   }

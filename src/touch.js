@@ -52,8 +52,11 @@ export function buttonRects(viewWidth, viewHeight) {
 // it cannot be hit by mistake. Its place does not depend on the view size.
 export const HelpButton = { label: '?', code: 'KeyH', x: MARGIN, y: RECIPES_BOTTOM + GAP, w: BUTTON, h: BUTTON };
 
+// The dark mode button sits beside it, for the same reasons.
+export const DarkButton = { label: 'Dark', code: 'KeyN', x: MARGIN + BUTTON + GAP, y: HelpButton.y, w: BUTTON, h: BUTTON };
+
 export function buttonAt(x, y, viewWidth, viewHeight) {
-  return [HelpButton, ...buttonRects(viewWidth, viewHeight)].find((r) => x >= r.x && x < r.x + r.w && y >= r.y && y < r.y + r.h) || null;
+  return [HelpButton, DarkButton,...buttonRects(viewWidth, viewHeight)].find((r) => x >= r.x && x < r.x + r.w && y >= r.y && y < r.y + r.h) || null;
 }
 
 // Arrow-key codes for a drag of (dx, dy) from where the finger went down:
@@ -89,7 +92,12 @@ export class TouchControls {
   }
 
   down(e) {
-    if (e.pointerType === 'mouse') return;
+    if (e.pointerType === 'mouse') {
+      // A mouse can click the Dark button and nothing else here.
+      const { width, height } = this.view();
+      if (buttonAt(e.clientX, e.clientY, width, height)?.code === DarkButton.code) this.press(DarkButton.code);
+      return;
+    }
     e.preventDefault();
     this.active = true;
     const { width, height } = this.view();
@@ -121,14 +129,15 @@ export class TouchControls {
 
   // In CSS pixels; all context state is restored afterwards.
   draw(ctx, viewWidth, viewHeight, dpr) {
-    if (!this.active) return;
+    // Before the first touch only the Dark button shows, for the mouse.
+    const shown = this.active ? [HelpButton, DarkButton, ...buttonRects(viewWidth, viewHeight)] : [DarkButton];
     ctx.save();
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.font = 'bold 13px sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.lineWidth = 1;
-    for (const r of [HelpButton, ...buttonRects(viewWidth, viewHeight)]) {
+    for (const r of shown) {
       ctx.fillStyle = 'rgba(0, 0, 0, 0.55)';
       ctx.fillRect(r.x, r.y, r.w, r.h);
       ctx.strokeStyle = '#ddd';

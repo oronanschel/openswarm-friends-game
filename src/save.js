@@ -5,8 +5,9 @@ const KEY = 'friends-game-save';
 // enough that old positions or collected keys no longer mean the same thing.
 const VERSION = 1;
 
-// state is { world, player, inventory, items, npcs, dayNight }; dayNight is optional.
-export function serialize({ world, player, inventory, items, npcs, dayNight }) {
+// state is { world, player, inventory, items, npcs, dayNight, darkMode }; the
+// last two are optional.
+export function serialize({ world, player, inventory, items, npcs, dayNight, darkMode }) {
   return {
     version: VERSION,
     seed: world.seed,
@@ -19,12 +20,13 @@ export function serialize({ world, player, inventory, items, npcs, dayNight }) {
     time: dayNight ? dayNight.time : 0,
     day: dayNight ? dayNight.day : 0,
     friendGifts: [...(npcs.friendGifts || [])],
+    dark: darkMode ? darkMode.on : false,
   };
 }
 
 // Copies a saved object into the live state. Returns false, changing nothing,
 // if the save is from another version or another world.
-export function apply(data, { world, player, inventory, items, npcs, dayNight }) {
+export function apply(data, { world, player, inventory, items, npcs, dayNight, darkMode }) {
   if (!data || data.version !== VERSION || data.seed !== world.seed) return false;
 
   // Changed tiles first: the saved position may stand where a tree used to be.
@@ -51,6 +53,8 @@ export function apply(data, { world, player, inventory, items, npcs, dayNight })
   // Saves from before daily gifts have neither; friends then count as
   // befriended on the day they are next seen.
   if (dayNight && Number.isInteger(data.day) && data.day >= 0) dayNight.day = data.day;
+  // Saves from before dark mode have no flag: it stays off.
+  if (darkMode) darkMode.on = data.dark === true;
   if (npcs.friendGifts) {
     const entries = Array.isArray(data.friendGifts) ? data.friendGifts : [];
     npcs.friendGifts = new Map(entries.filter((e) => Array.isArray(e) && typeof e[0] === 'string' && Number.isInteger(e[1])));

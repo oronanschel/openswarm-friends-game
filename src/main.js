@@ -12,6 +12,7 @@ import { chop, treeInReach } from './chop.js';
 import { TouchControls, buttonRects } from './touch.js';
 import { DayNight } from './daynight.js';
 import { Sound } from './sound.js';
+import { DarkMode } from './darkmode.js';
 import { Help } from './help.js';
 import { promptFor, drawPrompt } from './prompt.js';
 import { groundColor, hasArt, drawTileArt } from './tileart.js';
@@ -29,6 +30,7 @@ const inventory = new Inventory();
 const toasts = new Toasts();
 const quest = new Quest();
 const dayNight = new DayNight();
+const darkMode = new DarkMode();
 
 // Progress is kept in localStorage; reading the property can itself throw.
 let storage = null;
@@ -44,8 +46,13 @@ inventory.onAdd = (id, n) => {
   toasts.push('+' + n + ' ' + ItemById[id].name);
   sound.play('pickup');
 };
-const state = { world, player, inventory, items, npcs, dayNight };
+const state = { world, player, inventory, items, npcs, dayNight, darkMode };
 load(storage, state);
+// A saved dark mode wants its hum, but audio may only start after a gesture.
+sound.wantDrone = darkMode.on;
+const startHum = () => sound.syncDrone();
+window.addEventListener('keydown', startHum, { once: true });
+window.addEventListener('pointerdown', startHum, { once: true });
 let resetting = false;
 const autosave = () => {
   if (!resetting) save(storage, state);
@@ -122,6 +129,12 @@ onKey((e) => {
   if (e.code !== 'KeyM' || e.repeat) return;
   toasts.push(sound.toggleMute() ? 'Sound off' : 'Sound on');
   sound.play('pickup');
+});
+// N turns dark mode on or off.
+onKey((e) => {
+  if (e.code !== 'KeyN' || e.repeat) return;
+  toasts.push(darkMode.toggle() ? 'The lights go out...' : 'Lights on');
+  sound.setDrone(darkMode.on);
 });
 // H shows or hides the help panel; any other key, or a tap, closes it. The
 // key still does its usual job.
@@ -201,6 +214,7 @@ function draw() {
   player.draw(ctx);
   // Tint the world only; the HUD below stays readable at night.
   dayNight.draw(ctx, viewW, viewH, dpr);
+  darkMode.draw(ctx, viewW, viewH, dpr);
   minimap.draw(ctx, viewW, dpr, player, npcs.all, items.all);
   inventory.draw(ctx, viewH, dpr, viewW);
   // Below this width the full recipe panel would run into the minimap.
@@ -238,6 +252,7 @@ function frame(now) {
   toasts.update(dt);
   quest.update(dt, npcs.friends.size);
   dayNight.update(dt);
+  darkMode.update(dt);
   draw();
   requestAnimationFrame(frame);
 }

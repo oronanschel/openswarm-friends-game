@@ -10,6 +10,7 @@ import { Quest, GOAL } from './quest.js';
 import { save, load, clear } from './save.js';
 import { chop } from './chop.js';
 import { TouchControls } from './touch.js';
+import { DayNight } from './daynight.js';
 
 const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
@@ -23,6 +24,7 @@ const items = new Items(world);
 const inventory = new Inventory();
 const toasts = new Toasts();
 const quest = new Quest();
+const dayNight = new DayNight();
 inventory.onAdd = (id, n) => toasts.push('+' + n + ' ' + ItemById[id].name);
 
 // Progress is kept in localStorage; reading the property can itself throw.
@@ -74,7 +76,7 @@ window.addEventListener('keydown', (e) => {
   const npc = npcs.talkingTo(player);
   if (!npc || npc.friend) return;
   if (npcs.befriend(npc, inventory)) toasts.push(npc.name + ' is now your friend!');
-  else toasts.push('Needs a Shell Necklace (shells: beaches)');
+  else toasts.push(npc.name + ' wants a Shell Necklace');
 });
 
 // Canvas backing store is in device pixels; drawing uses CSS pixels.
@@ -133,6 +135,8 @@ function draw() {
   items.draw(ctx);
   npcs.draw(ctx);
   player.draw(ctx);
+  // Tint the world only; the HUD below stays readable at night.
+  dayNight.draw(ctx, viewW, viewH, dpr);
   minimap.draw(ctx, viewW, dpr, player, npcs.all, items.all);
   inventory.draw(ctx, viewH, dpr);
   // Below this width the full recipe panel would run into the minimap.
@@ -155,6 +159,7 @@ function frame(now) {
   items.update(player, inventory);
   toasts.update(dt);
   quest.update(dt, npcs.friends.size);
+  dayNight.update(dt);
   draw();
   requestAnimationFrame(frame);
 }

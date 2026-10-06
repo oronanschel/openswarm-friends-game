@@ -1,5 +1,5 @@
 // Node smoke test for src/minimap.js with a recording stand-in for the canvas.
-// Run with: node tests/minimap-smoke.mjs
+// Run with: node test/minimap.test.mjs
 import assert from 'node:assert';
 import { World, TILE } from '../src/world.js';
 import { Minimap } from '../src/minimap.js';

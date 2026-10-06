@@ -1,4 +1,4 @@
-// Node smoke test for src/npc.js. Run with: node tests/npc-smoke.mjs
+// Node smoke test for src/npc.js. Run with: node test/npc.test.mjs
 import assert from 'node:assert';
 import { World } from '../src/world.js';
 import { Player } from '../src/player.js';

@@ -39,6 +39,20 @@ function collides(x, y, world) {
   );
 }
 
+// A heart drawn as a path (a ♥ glyph can render as a colour emoji), centred on
+// (x, y) with half-width r.
+function drawHeart(ctx, x, y, r) {
+  ctx.beginPath();
+  ctx.moveTo(x, y + r);
+  ctx.bezierCurveTo(x - r * 1.6, y - r * 0.2, x - r * 0.6, y - r * 1.4, x, y - r * 0.4);
+  ctx.bezierCurveTo(x + r * 0.6, y - r * 1.4, x + r * 1.6, y - r * 0.2, x, y + r);
+  ctx.fillStyle = '#e53950';
+  ctx.fill();
+  ctx.lineWidth = 1;
+  ctx.strokeStyle = '#1b1b1b';
+  ctx.stroke();
+}
+
 class Npc {
   constructor(x, y, random) {
     this.x = x;
@@ -82,7 +96,9 @@ class Npc {
     else this.dy = -this.dy;
   }
 
+  // Restores all context state (font, alignment, colours) afterwards.
   draw(ctx) {
+    ctx.save();
     ctx.fillStyle = this.color;
     ctx.beginPath();
     ctx.arc(this.x, this.y, RADIUS, 0, Math.PI * 2);
@@ -90,14 +106,9 @@ class Npc {
     ctx.strokeStyle = '#1b1b1b';
     ctx.lineWidth = 2;
     ctx.stroke();
-    if (this.friend) {
-      ctx.fillStyle = '#e53950';
-      ctx.font = 'bold 12px sans-serif';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText('♥', this.x + RADIUS, this.y - RADIUS);
-    }
+    if (this.friend) drawHeart(ctx, this.x + RADIUS, this.y - RADIUS, 5);
     if (this.talking) this.drawBubble(ctx);
+    ctx.restore();
   }
 
   drawBubble(ctx) {

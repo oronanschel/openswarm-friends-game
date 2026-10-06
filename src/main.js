@@ -4,6 +4,7 @@ import { Npcs } from './npc.js';
 import { Minimap } from './minimap.js';
 import { Items } from './items.js';
 import { Inventory } from './inventory.js';
+import { save, load, clear } from './save.js';
 
 const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
@@ -16,8 +17,34 @@ const minimap = new Minimap(world);
 const items = new Items(world);
 const inventory = new Inventory();
 
+// Progress is kept in localStorage; reading the property can itself throw.
+let storage = null;
+try {
+  storage = window.localStorage;
+} catch {
+  // Play without saving.
+}
+const state = { world, player, inventory, items, npcs };
+load(storage, state);
+let resetting = false;
+const autosave = () => {
+  if (!resetting) save(storage, state);
+};
+setInterval(autosave, 5000);
+window.addEventListener('pagehide', autosave);
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'hidden') autosave();
+});
+
 const input = new Set();
 window.addEventListener('keydown', (e) => input.add(e.code));
+// Shift+R wipes the save and starts over.
+window.addEventListener('keydown', (e) => {
+  if (e.code !== 'KeyR' || !e.shiftKey) return;
+  resetting = true;
+  clear(storage);
+  window.location.reload();
+});
 window.addEventListener('keyup', (e) => input.delete(e.code));
 window.addEventListener('blur', () => input.clear());
 

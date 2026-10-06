@@ -26,12 +26,14 @@ const MARGIN = 12;
 const PAD = 8;
 const WIDTH = 250;
 
-// Recipe list at the top-left, in CSS pixels; all context state is restored.
-export function drawRecipes(ctx, inventory, dpr) {
+// Recipe list at the top-left, in CSS pixels, with an optional `footer` line
+// (e.g. the friend count); all context state is restored.
+export function drawRecipes(ctx, inventory, dpr, footer = null) {
   ctx.save();
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  const lines = Recipes.length + 1 + (footer ? 1 : 0);
   ctx.fillStyle = 'rgba(0, 0, 0, 0.55)';
-  ctx.fillRect(MARGIN, MARGIN, WIDTH, PAD * 2 + LINE * (Recipes.length + 1));
+  ctx.fillRect(MARGIN, MARGIN, WIDTH, PAD * 2 + LINE * lines);
   ctx.font = '13px sans-serif';
   ctx.textAlign = 'left';
   ctx.textBaseline = 'top';
@@ -43,5 +45,9 @@ export function drawRecipes(ctx, inventory, dpr) {
     ctx.globalAlpha = canCraft(inventory, recipe) ? 1 : 0.4;
     ctx.fillText(text, MARGIN + PAD, MARGIN + PAD + LINE * (i + 1));
   });
+  if (footer) {
+    ctx.globalAlpha = 1;
+    ctx.fillText(footer, MARGIN + PAD, MARGIN + PAD + LINE * (Recipes.length + 1));
+  }
   ctx.restore();
 }

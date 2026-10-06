@@ -12,6 +12,7 @@ export function serialize({ world, player, inventory, items, npcs }) {
     inventory: [...inventory.counts],
     collected: [...items.collected],
     gifted: [...(npcs.gifted || [])],
+    friends: [...(npcs.friends || [])],
     tiles: world.changedTiles(),
   };
 }
@@ -35,6 +36,8 @@ export function apply(data, { world, player, inventory, items, npcs }) {
   // Loaded regions were spawned without the collected set; respawn them.
   items.regions.clear();
   if (npcs.gifted) npcs.gifted = new Set(data.gifted || []);
+  // Saves from before befriending have no list.
+  if (npcs.friends) npcs.friends = new Set(data.friends || []);
   return true;
 }
 

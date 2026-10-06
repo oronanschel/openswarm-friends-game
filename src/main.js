@@ -65,6 +65,14 @@ window.addEventListener('keydown', (e) => {
 });
 window.addEventListener('keyup', (e) => input.delete(e.code));
 window.addEventListener('blur', () => input.clear());
+// E gives a Shell Necklace to the villager you are talking to, making a friend.
+window.addEventListener('keydown', (e) => {
+  if (e.code !== 'KeyE' || e.repeat) return;
+  const npc = npcs.talkingTo(player);
+  if (!npc || npc.friend) return;
+  if (npcs.befriend(npc, inventory)) toasts.push(npc.name + ' is now your friend!');
+  else toasts.push('Craft a Shell Necklace to befriend ' + npc.name);
+});
 
 // Canvas backing store is in device pixels; drawing uses CSS pixels.
 let viewW = 0;
@@ -113,7 +121,7 @@ function draw() {
   player.draw(ctx);
   minimap.draw(ctx, viewW, dpr, player, npcs.all, items.all);
   inventory.draw(ctx, viewH, dpr);
-  drawRecipes(ctx, inventory, dpr);
+  drawRecipes(ctx, inventory, dpr, 'Friends: ' + npcs.friends.size + '  (E to give a necklace)');
   toasts.draw(ctx, viewH, dpr);
 }
 

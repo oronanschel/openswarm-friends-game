@@ -1,5 +1,5 @@
 import { TILE } from './world.js';
-import { RawItems } from './items.js';
+import { ItemTypes, RawItems } from './items.js';
 
 const REGION = 16; // tiles per side of a spawn region
 const LOAD_RADIUS = 2; // regions kept populated around the player
@@ -54,6 +54,7 @@ class Npc {
     this.key = null; // "rx,ry,index": stable across region reloads
     this.gift = null; // item type handed over on first talk, if any
     this.giving = false; // true while showing the gift line
+    this.friend = false; // mirrors Npcs.friends, refreshed every update
   }
 
   update(dt, player, world) {
@@ -89,11 +90,20 @@ class Npc {
     ctx.strokeStyle = '#1b1b1b';
     ctx.lineWidth = 2;
     ctx.stroke();
+    if (this.friend) {
+      ctx.fillStyle = '#e53950';
+      ctx.font = 'bold 12px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('♥', this.x + RADIUS, this.y - RADIUS);
+    }
     if (this.talking) this.drawBubble(ctx);
   }
 
   drawBubble(ctx) {
-    const line = this.giving ? 'Here, take this ' + this.gift.name.toLowerCase() + '!' : this.line;
+    let line = this.line;
+    if (this.giving) line = 'Here, take this ' + this.gift.name.toLowerCase() + '!';
+    else if (this.friend) line = 'Good to see you, friend!';
     const text = this.name + ': ' + line;
     ctx.font = '13px sans-serif';
     ctx.textAlign = 'center';
@@ -118,11 +128,34 @@ export class Npcs {
     this.regions = new Map();
     // Keys of NPCs that already handed over their gift; persisted by save/load.
     this.gifted = new Set();
+    // Keys of NPCs befriended with a Shell Necklace; persisted by save/load.
+    this.friends = new Set();
   }
 
   // Every NPC in a loaded region, for other systems such as the minimap.
   get all() {
     return [...this.regions.values()].flat();
+  }
+
+  // The nearest NPC currently talking to the player, or null.
+  talkingTo(player) {
+    let best = null;
+    for (const npc of this.all) {
+      if (!npc.talking) continue;
+      if (!best || Math.hypot(player.x - npc.x, player.y - npc.y) < Math.hypot(player.x - best.x, player.y - best.y)) best = npc;
+    }
+    return best;
+  }
+
+  // Gives `npc` a Shell Necklace from the inventory to become friends.
+  // Returns false, changing nothing, if already friends or there is no necklace.
+  befriend(npc, inventory) {
+    if (!npc || this.friends.has(npc.key)) return false;
+    if (!inventory.remove(ItemTypes.NECKLACE.id)) return false;
+    this.friends.add(npc.key);
+    npc.friend = true;
+    npc.giving = false;
+    return true;
   }
 
   spawnRegion(rx, ry) {
@@ -166,6 +199,7 @@ export class Npcs {
     for (const npcs of this.regions.values()) {
       for (const npc of npcs) {
         npc.update(dt, player, this.world);
+        npc.friend = this.friends.has(npc.key);
         if (!npc.talking) npc.giving = false;
         else if (inventory && npc.gift && !this.gifted.has(npc.key)) {
           inventory.add(npc.gift.id);

@@ -4,12 +4,18 @@ import { drawItemArt, ART_SIZE } from './itemart.js';
 const SLOT = 40;
 const GAP = 6;
 const MARGIN = 12;
-const ICON_SCALE = 1.5; // world art is 12px; hotbar icons are 18px
+const MIN_SLOT = 24;
+const ICON_SCALE = 1.5; // world art is 12px; icons are 18px in a full-size slot
 
-// The hotbar's extent in CSS pixels from the bottom-left corner of the view,
-// for other HUD parts to stay clear of.
-export const HOTBAR_RIGHT = MARGIN + ItemById.length * (SLOT + GAP) - GAP;
-export const HOTBAR_TOP = MARGIN + SLOT;
+// The hotbar for a view `viewWidth` CSS pixels wide holding `slots` item
+// types: `slot` is the side of one slot, shrunk evenly from 40px when the bar
+// would not fit; `right` and `top` are its extent from the bottom-left corner
+// of the view, for other HUD parts to stay clear of.
+export function hotbarLayout(viewWidth = Infinity, slots = ItemById.length) {
+  const fit = Math.floor((viewWidth - MARGIN * 2 - (slots - 1) * GAP) / slots);
+  const slot = Math.max(MIN_SLOT, Math.min(SLOT, fit));
+  return { slot, right: MARGIN + slots * (slot + GAP) - GAP, top: MARGIN + slot };
+}
 
 export class Inventory {
   constructor() {
@@ -37,26 +43,29 @@ export class Inventory {
 
   // Hotbar at the bottom-left, in CSS pixels. All context state (transform,
   // text alignment, alpha) is restored afterwards so it doesn't leak to callers.
-  draw(ctx, viewHeight, dpr) {
+  // Given `viewWidth`, the slots shrink to fit a narrow window.
+  draw(ctx, viewHeight, dpr, viewWidth = Infinity) {
     ctx.save();
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    const top = viewHeight - SLOT - MARGIN;
-    ctx.font = 'bold 12px sans-serif';
+    const { slot } = hotbarLayout(viewWidth);
+    const scale = slot / SLOT;
+    const top = viewHeight - slot - MARGIN;
+    ctx.font = `bold ${scale < 0.8 ? 10 : 12}px sans-serif`;
     ctx.textAlign = 'right';
     ctx.textBaseline = 'bottom';
     ItemById.forEach((type, i) => {
-      const left = MARGIN + i * (SLOT + GAP);
+      const left = MARGIN + i * (slot + GAP);
       ctx.fillStyle = 'rgba(0, 0, 0, 0.55)';
-      ctx.fillRect(left, top, SLOT, SLOT);
+      ctx.fillRect(left, top, slot, slot);
       ctx.strokeStyle = '#ddd';
       ctx.lineWidth = 1;
-      ctx.strokeRect(left + 0.5, top + 0.5, SLOT - 1, SLOT - 1);
+      ctx.strokeRect(left + 0.5, top + 0.5, slot - 1, slot - 1);
       const count = this.count(type.id);
       ctx.globalAlpha = count ? 1 : 0.3;
       // The same art as in the world, scaled up to fill the slot's icon area.
       ctx.save();
-      ctx.translate(left + SLOT / 2, top + 16);
-      ctx.scale(ICON_SCALE, ICON_SCALE);
+      ctx.translate(left + slot / 2, top + 16 * scale);
+      ctx.scale(ICON_SCALE * scale, ICON_SCALE * scale);
       if (!drawItemArt(ctx, type, 0, 0)) {
         ctx.fillStyle = type.color;
         ctx.fillRect(-ART_SIZE / 2, -ART_SIZE / 2, ART_SIZE, ART_SIZE);
@@ -64,7 +73,7 @@ export class Inventory {
       ctx.restore();
       ctx.globalAlpha = 1;
       ctx.fillStyle = '#fff';
-      ctx.fillText(String(count), left + SLOT - 4, top + SLOT - 2);
+      ctx.fillText(String(count), left + slot - 4 * scale, top + slot - 2 * scale);
     });
     ctx.restore();
   }

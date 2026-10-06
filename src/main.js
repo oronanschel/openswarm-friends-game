@@ -186,7 +186,7 @@ function draw() {
   // Tint the world only; the HUD below stays readable at night.
   dayNight.draw(ctx, viewW, viewH, dpr);
   minimap.draw(ctx, viewW, dpr, player, npcs.all, items.all);
-  inventory.draw(ctx, viewH, dpr);
+  inventory.draw(ctx, viewH, dpr, viewW);
   // Below this width the full recipe panel would run into the minimap.
   const narrow = viewW < 460;
   const hint = narrow || npcs.friends.size >= GOAL ? '' : ' (E: necklace)';

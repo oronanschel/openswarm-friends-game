@@ -1,0 +1,157 @@
+import { TILE } from './world.js';
+
+const REGION = 16; // tiles per side of a spawn region
+const LOAD_RADIUS = 2; // regions kept populated around the player
+const SPEED = 50; // pixels per second
+const RADIUS = 10;
+const TALK_DISTANCE = 56;
+
+const NAMES = ['Ada', 'Bram', 'Cleo', 'Dov', 'Esme', 'Finn', 'Gita', 'Hugo'];
+const LINES = [
+  'Nice day for a walk.',
+  'I hear the water goes on forever.',
+  'Mind the trees.',
+  'Have you been far to the east?',
+  'I am sure I left my boat around here.',
+  'The sand is warm today.',
+];
+const COLORS = ['#d9534f', '#8e6bd1', '#e08a2e', '#3fb6c6'];
+
+// Small seeded PRNG so each region always spawns the same NPCs.
+function rng(seed) {
+  let a = seed | 0;
+  return () => {
+    a = (a + 0x6d2b79f5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+function collides(x, y, world) {
+  return (
+    world.isSolid(x - RADIUS, y - RADIUS) ||
+    world.isSolid(x + RADIUS, y - RADIUS) ||
+    world.isSolid(x - RADIUS, y + RADIUS) ||
+    world.isSolid(x + RADIUS, y + RADIUS)
+  );
+}
+
+class Npc {
+  constructor(x, y, random) {
+    this.x = x;
+    this.y = y;
+    this.random = random;
+    this.name = NAMES[Math.floor(random() * NAMES.length)];
+    this.line = LINES[Math.floor(random() * LINES.length)];
+    this.color = COLORS[Math.floor(random() * COLORS.length)];
+    this.dx = 0;
+    this.dy = 0;
+    this.timer = 0;
+    this.talking = false;
+  }
+
+  update(dt, player, world) {
+    this.talking = Math.hypot(player.x - this.x, player.y - this.y) < TALK_DISTANCE;
+    if (this.talking) return;
+
+    this.timer -= dt;
+    if (this.timer <= 0) {
+      // Alternate between standing still and walking in a random direction.
+      this.timer = 1 + this.random() * 2;
+      if (this.dx || this.dy) {
+        this.dx = 0;
+        this.dy = 0;
+      } else {
+        const angle = this.random() * Math.PI * 2;
+        this.dx = Math.cos(angle);
+        this.dy = Math.sin(angle);
+      }
+    }
+    const nx = this.x + this.dx * SPEED * dt;
+    if (!collides(nx, this.y, world)) this.x = nx;
+    else this.dx = -this.dx;
+    const ny = this.y + this.dy * SPEED * dt;
+    if (!collides(this.x, ny, world)) this.y = ny;
+    else this.dy = -this.dy;
+  }
+
+  draw(ctx) {
+    ctx.fillStyle = this.color;
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, RADIUS, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = '#1b1b1b';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    if (this.talking) this.drawBubble(ctx);
+  }
+
+  drawBubble(ctx) {
+    const text = this.name + ': ' + this.line;
+    ctx.font = '13px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    const w = ctx.measureText(text).width + 12;
+    const h = 22;
+    const bx = this.x - w / 2;
+    const by = this.y - RADIUS - h - 8;
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.92)';
+    ctx.fillRect(bx, by, w, h);
+    ctx.strokeStyle = '#1b1b1b';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(bx, by, w, h);
+    ctx.fillStyle = '#1b1b1b';
+    ctx.fillText(text, this.x, by + h / 2);
+  }
+}
+
+export class Npcs {
+  constructor(world) {
+    this.world = world;
+    this.regions = new Map();
+  }
+
+  // Every NPC in a loaded region, for other systems such as the minimap.
+  get all() {
+    return [...this.regions.values()].flat();
+  }
+
+  spawnRegion(rx, ry) {
+    const random = rng(Math.imul(rx, 73856093) ^ Math.imul(ry, 19349663) ^ Math.imul(this.world.seed, 83492791));
+    const npcs = [];
+    const count = Math.floor(random() * 3);
+    // A few attempts per NPC; a region that is mostly water just stays empty.
+    for (let i = 0; i < count * 4 && npcs.length < count; i++) {
+      const x = (rx * REGION + Math.floor(random() * REGION) + 0.5) * TILE;
+      const y = (ry * REGION + Math.floor(random() * REGION) + 0.5) * TILE;
+      if (!collides(x, y, this.world)) npcs.push(new Npc(x, y, random));
+    }
+    return npcs;
+  }
+
+  update(dt, player) {
+    const prx = Math.floor(player.x / TILE / REGION);
+    const pry = Math.floor(player.y / TILE / REGION);
+    for (let ry = pry - LOAD_RADIUS; ry <= pry + LOAD_RADIUS; ry++) {
+      for (let rx = prx - LOAD_RADIUS; rx <= prx + LOAD_RADIUS; rx++) {
+        const key = rx + ',' + ry;
+        if (!this.regions.has(key)) this.regions.set(key, this.spawnRegion(rx, ry));
+      }
+    }
+    // Drop regions well behind the player; they respawn the same when revisited.
+    for (const key of this.regions.keys()) {
+      const [rx, ry] = key.split(',').map(Number);
+      if (Math.abs(rx - prx) > LOAD_RADIUS + 1 || Math.abs(ry - pry) > LOAD_RADIUS + 1) this.regions.delete(key);
+    }
+    for (const npcs of this.regions.values()) {
+      for (const npc of npcs) npc.update(dt, player, this.world);
+    }
+  }
+
+  draw(ctx) {
+    for (const npcs of this.regions.values()) {
+      for (const npc of npcs) npc.draw(ctx);
+    }
+  }
+}

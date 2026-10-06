@@ -212,12 +212,14 @@ function draw() {
   for (let i = 0; i < art.length; i += 3) drawTileArt(ctx, art[i], art[i + 1] * TILE, art[i + 2] * TILE);
   art.length = 0;
   items.draw(ctx);
-  npcs.draw(ctx);
+  npcs.draw(ctx, darkMode.on);
   zombies.draw(ctx);
   player.draw(ctx);
   // Tint the world only; the HUD below stays readable at night.
   dayNight.draw(ctx, viewW, viewH, dpr);
   darkMode.draw(ctx, viewW, viewH, dpr);
+  // Still in world coordinates: villagers' words show through the darkness.
+  if (darkMode.on) npcs.drawBubbles(ctx);
   minimap.draw(ctx, viewW, dpr, player, npcs.all, items.all);
   inventory.draw(ctx, viewH, dpr, viewW);
   // Below this width the full recipe panel would run into the minimap.

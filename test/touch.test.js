@@ -98,8 +98,8 @@ test('a narrow window lifts the buttons above the hotbar; a wide one does not', 
   assert.equal(new Set(narrow.map((r) => r.x)).size, 2);
   const wide = buttonRects(640, 500);
   assert.equal(wide[0].y + wide[0].h, 500 - 12);
-  // One column at 360 wide is already clear of the hotbar and stays put.
-  const tall = buttonRects(360, 640);
+  // One column that is already clear of the hotbar stays put.
+  const tall = buttonRects(HOTBAR_RIGHT + 12 + 44 + 12, 640);
   assert.equal(tall[0].y + tall[0].h, 640 - 12);
 });
 

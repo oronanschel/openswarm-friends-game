@@ -48,9 +48,9 @@ test('buttons sit on screen, do not overlap, and are found by position', () => {
   assert.equal(buttonAt(10, 10, VIEW.width, VIEW.height), null);
 });
 
-test('on a short window the buttons use two columns and stay below the minimap', () => {
+test('on a short window the buttons use three columns and stay below the minimap', () => {
   const rects = buttonRects(640, 360);
-  assert.equal(new Set(rects.map((r) => r.x)).size, 2);
+  assert.equal(new Set(rects.map((r) => r.x)).size, 3);
   for (const r of rects) {
     assert.ok(r.x >= 0 && r.x + r.w <= 640 && r.y + r.h <= 360);
     // The minimap occupies y 12 to 174 at the top-right.
@@ -63,7 +63,23 @@ test('on a short window the buttons use two columns and stay below the minimap',
     }
   }
   // The tall layout also clears the minimap from its threshold up.
-  assert.ok(buttonRects(360, 490).every((r) => r.y >= 174));
+  assert.ok(buttonRects(360, 542).every((r) => r.y >= 174));
+});
+
+test('between the two, columns of four clear the minimap at every height', () => {
+  for (let height = 0; height <= 700; height++) {
+    const rects = buttonRects(360, height);
+    if (height >= 386) assert.ok(rects.every((r) => r.y >= 174), `height ${height}`);
+    if (height >= 386 && height < 542) assert.equal(new Set(rects.map((r) => r.x)).size, 2, `height ${height}`);
+  }
+});
+
+test('the Mute button sends the M key', () => {
+  const { controls, fire, pressed } = setup();
+  const mute = buttonRects(VIEW.width, VIEW.height).find((r) => r.label === 'Mute');
+  fire('pointerdown', 1, mute.x + 5, mute.y + 5);
+  assert.deepEqual(pressed, ['KeyM']);
+  assert.equal(controls.stick, null);
 });
 
 test('dragging holds arrow codes and lifting releases them', () => {

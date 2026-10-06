@@ -4,6 +4,11 @@ const SLOT = 40;
 const GAP = 6;
 const MARGIN = 12;
 
+// The hotbar's extent in CSS pixels from the bottom-left corner of the view,
+// for other HUD parts to stay clear of.
+export const HOTBAR_RIGHT = MARGIN + ItemById.length * (SLOT + GAP) - GAP;
+export const HOTBAR_TOP = MARGIN + SLOT;
+
 export class Inventory {
   constructor() {
     this.counts = new Map(); // item id -> count

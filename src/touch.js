@@ -1,3 +1,5 @@
+import { HOTBAR_RIGHT, HOTBAR_TOP } from './inventory.js';
+
 const DEADZONE = 12; // CSS pixels the finger must travel before the player moves
 const STICK_RADIUS = 48; // drawn size of the joystick ring
 const BUTTON = 44;
@@ -15,15 +17,27 @@ export const Buttons = [
   { label: 'Mute', code: 'KeyM' },
 ];
 
-// Buttons stacked up the right edge, in CSS pixels. A single column of seven
-// needs 542px of height to stay below the minimap; shorter windows get columns
-// of four, and below 386px (a phone on its side) columns of three.
+const MINIMAP_BOTTOM = 174;
+const ROWS = [Buttons.length, 4, 3, 2];
+
+// Buttons stacked up the right edge, in CSS pixels, in the tallest columns that
+// stay below the minimap: one column of seven from 542px of height, columns of
+// four from 386px, then three (a phone on its side), then two. Where the
+// columns would reach the hotbar (a narrow window) the block sits above it.
 export function buttonRects(viewWidth, viewHeight) {
-  const rows = viewHeight >= 542 ? Buttons.length : viewHeight >= 386 ? 4 : 3;
+  let rows;
+  let lift;
+  for (rows of ROWS) {
+    const columns = Math.ceil(Buttons.length / rows);
+    const left = viewWidth - MARGIN - BUTTON - (columns - 1) * (BUTTON + GAP);
+    lift = left < HOTBAR_RIGHT + GAP ? HOTBAR_TOP + GAP - MARGIN : 0;
+    const top = viewHeight - MARGIN - lift - rows * (BUTTON + GAP) + GAP;
+    if (top >= MINIMAP_BOTTOM) break;
+  }
   return Buttons.map((button, i) => ({
     ...button,
     x: viewWidth - MARGIN - BUTTON - Math.floor(i / rows) * (BUTTON + GAP),
-    y: viewHeight - MARGIN - BUTTON - (i % rows) * (BUTTON + GAP),
+    y: viewHeight - MARGIN - lift - BUTTON - (i % rows) * (BUTTON + GAP),
     w: BUTTON,
     h: BUTTON,
   }));

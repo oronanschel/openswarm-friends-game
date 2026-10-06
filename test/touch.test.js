@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { TouchControls, Buttons, buttonRects, buttonAt, stickKeys } from '../src/touch.js';
+import { HOTBAR_RIGHT, HOTBAR_TOP } from '../src/inventory.js';
 import { Player } from '../src/player.js';
 import { TILE } from '../src/world.js';
 
@@ -68,10 +69,38 @@ test('on a short window the buttons use three columns and stay below the minimap
 
 test('between the two, columns of four clear the minimap at every height', () => {
   for (let height = 0; height <= 700; height++) {
-    const rects = buttonRects(360, height);
+    const rects = buttonRects(640, height);
     if (height >= 386) assert.ok(rects.every((r) => r.y >= 174), `height ${height}`);
     if (height >= 386 && height < 542) assert.equal(new Set(rects.map((r) => r.x)).size, 2, `height ${height}`);
   }
+});
+
+test('no button touches the hotbar or the minimap, however narrow the window', () => {
+  // Three rows above the hotbar need 382px of height.
+  for (let width = 320; width <= 700; width += 4) {
+    for (let height = 382; height <= 700; height += 2) {
+      const rects = buttonRects(width, height);
+      const at = `${width}x${height}`;
+      assert.equal(new Set(rects.map((r) => r.x + ',' + r.y)).size, Buttons.length, at);
+      for (const r of rects) {
+        assert.ok(r.x >= 0 && r.x + r.w <= width && r.y + r.h <= height, at);
+        assert.ok(r.y >= 174, at);
+        assert.ok(r.x >= HOTBAR_RIGHT || r.y + r.h <= height - HOTBAR_TOP, at);
+      }
+    }
+  }
+});
+
+test('a narrow window lifts the buttons above the hotbar; a wide one does not', () => {
+  // 360x500 used to put the second column's bottom button on the last slot.
+  const narrow = buttonRects(360, 500);
+  assert.ok(narrow.every((r) => r.y + r.h <= 500 - HOTBAR_TOP));
+  assert.equal(new Set(narrow.map((r) => r.x)).size, 2);
+  const wide = buttonRects(640, 500);
+  assert.equal(wide[0].y + wide[0].h, 500 - 12);
+  // One column at 360 wide is already clear of the hotbar and stays put.
+  const tall = buttonRects(360, 640);
+  assert.equal(tall[0].y + tall[0].h, 640 - 12);
 });
 
 test('the Mute button sends the M key', () => {

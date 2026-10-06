@@ -11,6 +11,7 @@ import { save, load, clear } from './save.js';
 import { chop } from './chop.js';
 import { TouchControls } from './touch.js';
 import { DayNight } from './daynight.js';
+import { Sound } from './sound.js';
 
 const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
@@ -25,7 +26,6 @@ const inventory = new Inventory();
 const toasts = new Toasts();
 const quest = new Quest();
 const dayNight = new DayNight();
-inventory.onAdd = (id, n) => toasts.push('+' + n + ' ' + ItemById[id].name);
 
 // Progress is kept in localStorage; reading the property can itself throw.
 let storage = null;
@@ -34,6 +34,12 @@ try {
 } catch {
   // Play without saving.
 }
+const sound = new Sound(storage);
+// Picking up and crafting both add to the inventory.
+inventory.onAdd = (id, n) => {
+  toasts.push('+' + n + ' ' + ItemById[id].name);
+  sound.play('pickup');
+};
 const state = { world, player, inventory, items, npcs, dayNight };
 load(storage, state);
 let resetting = false;
@@ -61,18 +67,27 @@ window.addEventListener('keydown', (e) => {
   if (!chop(world, player, inventory, ItemTypes.STONE_AXE)) return;
   minimap.invalidate();
   toasts.push('Chopped a tree');
+  sound.play('chop');
 });
 // Number keys craft the matching recipe.
 window.addEventListener('keydown', (e) => {
   const recipe = Recipes.find((r) => r.key === e.code);
   if (!recipe || e.repeat) return;
-  if (!craft(inventory, recipe)) toasts.push('Need ' + recipe.inputs.map(([type, n]) => n + ' ' + type.name).join(' + '));
+  if (!craft(inventory, recipe)) {
+    toasts.push('Need ' + recipe.inputs.map(([type, n]) => n + ' ' + type.name).join(' + '));
+    sound.play('nope');
+  }
 });
 // F eats a Berry Jam for a burst of speed.
 window.addEventListener('keydown', (e) => {
   if (e.code !== 'KeyF' || e.repeat) return;
-  if (player.eat(inventory, ItemTypes.JAM)) toasts.push('Yum! Speed boost');
-  else toasts.push('Need Berry Jam');
+  if (player.eat(inventory, ItemTypes.JAM)) {
+    toasts.push('Yum! Speed boost');
+    sound.play('eat');
+  } else {
+    toasts.push('Need Berry Jam');
+    sound.play('nope');
+  }
 });
 window.addEventListener('keyup', (e) => input.delete(e.code));
 window.addEventListener('blur', () => input.clear());
@@ -81,8 +96,19 @@ window.addEventListener('keydown', (e) => {
   if (e.code !== 'KeyE' || e.repeat) return;
   const npc = npcs.talkingTo(player);
   if (!npc || npc.friend) return;
-  if (npcs.befriend(npc, inventory)) toasts.push(npc.name + ' is now your friend!');
-  else toasts.push(npc.name + ' wants a Shell Necklace');
+  if (npcs.befriend(npc, inventory)) {
+    toasts.push(npc.name + ' is now your friend!');
+    sound.play('friend');
+  } else {
+    toasts.push(npc.name + ' wants a Shell Necklace');
+    sound.play('nope');
+  }
+});
+// M mutes or unmutes the sound effects.
+window.addEventListener('keydown', (e) => {
+  if (e.code !== 'KeyM' || e.repeat) return;
+  toasts.push(sound.toggleMute() ? 'Sound off' : 'Sound on');
+  sound.play('pickup');
 });
 
 // Canvas backing store is in device pixels; drawing uses CSS pixels.

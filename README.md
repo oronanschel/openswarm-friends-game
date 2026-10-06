@@ -23,6 +23,8 @@ The world has grassland and snow country; snowy regions grow pines, which block 
 
 On a touch screen, drag anywhere to walk and use the buttons at the bottom-right (1, 2, 3, Eat, E, Chop) in place of the keys.
 
+Short synthesized sound effects play for pickups, chopping, eating and making friends; press M to mute or unmute them (remembered between visits).
+
 Progress (position, inventory, what you have picked up and trees you have chopped) is saved in the browser every few seconds and restored on the next visit. Press Shift+R to wipe the save and start over.
 
 ## Tests

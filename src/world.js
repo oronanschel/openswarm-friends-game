@@ -9,7 +9,11 @@ export const Tiles = {
   GRASS: { id: 2, color: '#4f9a3a', solid: false },
   TREE: { id: 3, color: '#25602a', solid: true },
   STUMP: { id: 4, color: '#7a5a34', solid: false },
+  SNOW: { id: 5, color: '#e8eef2', solid: false },
+  PINE: { id: 6, color: '#1f4a45', solid: true },
 };
+
+const COLD = 0.6; // temperature noise above this is snow country
 
 export const TileById = [];
 for (const tile of Object.values(Tiles)) TileById[tile.id] = tile;
@@ -122,7 +126,18 @@ export class World {
     return ids;
   }
 
+  // The procedural tile at (tx, ty), ignoring anything the player changed.
   generate(tx, ty) {
+    const tile = this.terrain(tx, ty);
+    // Biomes only swap a tile for one of the same solidity, so where the player
+    // can walk, and everything spawned from that, is the same in every biome.
+    if (tile !== Tiles.GRASS && tile !== Tiles.TREE) return tile;
+    if (noise(tx, ty, 96, this.seed + 3) <= COLD) return tile;
+    return tile === Tiles.GRASS ? Tiles.SNOW : Tiles.PINE;
+  }
+
+  // Land, water and trees before biomes are applied.
+  terrain(tx, ty) {
     const height = noise(tx, ty, 24, this.seed) * 0.7 + noise(tx, ty, 6, this.seed + 1) * 0.3;
     if (height < 0.35) return Tiles.WATER;
     if (height < 0.4) return Tiles.SAND;

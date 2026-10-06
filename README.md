@@ -19,6 +19,8 @@ Move with WASD or the arrow keys. Water and trees block movement. Walk up to a v
 
 With a stone axe in the inventory, press Space next to a tree to chop it down and open a path.
 
+The world has grassland and snow country; snowy regions grow pines, which block and chop like trees.
+
 On a touch screen, drag anywhere to walk and use the buttons at the bottom-right (1, 2, 3, E, Chop) in place of the keys.
 
 Progress (position, inventory, what you have picked up and trees you have chopped) is saved in the browser every few seconds and restored on the next visit. Press Shift+R to wipe the save and start over.

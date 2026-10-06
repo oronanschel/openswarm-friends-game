@@ -29,7 +29,11 @@ const npcs = [
   { x: player.x + 5 * TILE, y: player.y - 3 * TILE }, // in range
   { x: player.x + 500 * TILE, y: player.y }, // out of range
 ];
-minimap.draw(ctx, 800, 2, player, npcs);
+const items = [
+  { x: player.x - 2 * TILE, y: player.y + 4 * TILE, type: { color: '#c2185b' } }, // in range
+  { x: player.x, y: player.y - 500 * TILE, type: { color: '#9e9e9e' } }, // out of range
+];
+minimap.draw(ctx, 800, 2, player, npcs, items);
 
 // The terrain buffer holds one cell per tile, coloured like the world.
 assert.equal(bufferCtx.calls.length, 81 * 81);
@@ -42,11 +46,14 @@ assert.deepEqual(ctx.calls[0], { name: 'setTransform', args: [2, 0, 0, 2, 0, 0],
 const image = ctx.calls.find((call) => call.name === 'drawImage');
 assert.deepEqual(image.args.slice(1), [800 - 162 - 12, 12]);
 
-// One dot for the NPC in range, one for the player, at the right cells.
+// One dot each for the item and NPC in range, then the player, at the right cells.
 const dots = ctx.calls.filter((call) => call.name === 'fillRect');
-assert.equal(dots.length, 2);
-assert.deepEqual(dots[0].args, [626 + 45 * 2, 12 + 37 * 2, 2, 2]);
-assert.deepEqual(dots[1].args, [626 + 79, 12 + 79, 4, 4]);
+assert.equal(dots.length, 3);
+assert.deepEqual(dots[0].args, [626 + 38 * 2, 12 + 44 * 2, 2, 2]);
+assert.equal(dots[0].fillStyle, '#c2185b');
+assert.deepEqual(dots[1].args, [626 + 45 * 2, 12 + 37 * 2, 2, 2]);
+assert.equal(dots[1].fillStyle, '#ffffff');
+assert.deepEqual(dots[2].args, [626 + 79, 12 + 79, 4, 4]);
 
 // The buffer is only repainted when the player changes tile.
 player.x += 1;

@@ -1,5 +1,8 @@
+import { TILE } from './world.js';
+
 const SPEED = 160; // pixels per second
-const RADIUS = 10;
+export const RADIUS = 10;
+const EPSILON = 0.001;
 
 export class Player {
   constructor(x, y) {
@@ -19,10 +22,21 @@ export class Player {
       dy *= Math.SQRT1_2;
     }
     // Move each axis separately so the player slides along walls.
-    const nx = this.x + dx * SPEED * dt;
-    if (!this.collides(nx, this.y, world)) this.x = nx;
-    const ny = this.y + dy * SPEED * dt;
-    if (!this.collides(this.x, ny, world)) this.y = ny;
+    this.x = this.moveAxis(this.x, dx * SPEED * dt, (x) => this.collides(x, this.y, world));
+    this.y = this.moveAxis(this.y, dy * SPEED * dt, (y) => this.collides(this.x, y, world));
+  }
+
+  // Move along one axis; if blocked, stop flush against the wall edge.
+  moveAxis(pos, delta, blocked) {
+    if (!delta) return pos;
+    const next = pos + delta;
+    if (!blocked(next)) return next;
+    const flush =
+      delta > 0
+        ? Math.floor((next + RADIUS) / TILE) * TILE - RADIUS - EPSILON
+        : Math.floor((next - RADIUS) / TILE + 1) * TILE + RADIUS + EPSILON;
+    const moved = delta > 0 ? flush > pos : flush < pos;
+    return moved && !blocked(flush) ? flush : pos;
   }
 
   collides(x, y, world) {

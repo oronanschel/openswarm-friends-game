@@ -1,6 +1,8 @@
 export const CYCLE = 240; // seconds for a full day
 export const MAX_ALPHA = 0.45; // night stays this light so the game is playable
 
+export const LIGHT_RADIUS = 150; // CSS pixels of lit area around the player
+
 // Tint over the world through the day: [phase in 0..1, r, g, b, alpha].
 // The first and last keys match so the cycle wraps smoothly.
 const KEYS = [
@@ -48,12 +50,24 @@ export class DayNight {
   }
 
   // Full-screen tint; draw after the world and before the HUD. Restores ctx.
-  draw(ctx, viewWidth, viewHeight, dpr) {
+  // The camera keeps the player at the centre of the view, so the tint fades
+  // out there over `lightRadius` CSS pixels (0 for a flat tint).
+  draw(ctx, viewWidth, viewHeight, dpr, lightRadius = LIGHT_RADIUS) {
     const { r, g, b, a } = tintAt(this.phase);
     if (a <= 0) return;
     ctx.save();
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${a.toFixed(3)})`;
+    const colour = (alpha) => `rgba(${r}, ${g}, ${b}, ${alpha.toFixed(3)})`;
+    if (lightRadius > 0) {
+      const cx = viewWidth / 2;
+      const cy = viewHeight / 2;
+      const glow = ctx.createRadialGradient(cx, cy, lightRadius * 0.3, cx, cy, lightRadius);
+      glow.addColorStop(0, colour(0));
+      glow.addColorStop(1, colour(a));
+      ctx.fillStyle = glow;
+    } else {
+      ctx.fillStyle = colour(a);
+    }
     ctx.fillRect(0, 0, viewWidth, viewHeight);
     ctx.restore();
   }

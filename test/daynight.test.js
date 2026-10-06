@@ -40,9 +40,33 @@ test('draw does nothing by day and restores ctx at night', () => {
   });
   new DayNight(0).draw(ctx, 800, 600, 2);
   assert.equal(calls.length, 0);
-  new DayNight(CYCLE * 0.75).draw(ctx, 800, 600, 2);
+  new DayNight(CYCLE * 0.75).draw(ctx, 800, 600, 2, 0);
   assert.equal(calls[0].name, 'save');
   assert.deepEqual(calls.find((c) => c.name === 'fillRect').args, [0, 0, 800, 600]);
   assert.equal(calls.at(-1).name, 'restore');
   assert.match(ctx.fillStyle, /^rgba\(10, 20, 60, 0\.450\)$/);
+});
+
+test('at night the player is lit: the tint fades out at the view centre', () => {
+  const stops = [];
+  const circles = [];
+  const ctx = new Proxy({}, {
+    get: (target, name) => {
+      if (name === 'createRadialGradient') {
+        return (...args) => {
+          circles.push(args);
+          return { addColorStop: (at, colour) => stops.push([at, colour]) };
+        };
+      }
+      return name in target ? target[name] : () => {};
+    },
+    set: (target, name, value) => ((target[name] = value), true),
+  });
+  new DayNight(CYCLE * 0.75).draw(ctx, 800, 600, 2);
+  assert.deepEqual(circles[0].slice(0, 2), [400, 300]);
+  assert.deepEqual(stops, [
+    [0, 'rgba(10, 20, 60, 0.000)'],
+    [1, 'rgba(10, 20, 60, 0.450)'],
+  ]);
+  assert.equal(typeof ctx.fillStyle, 'object');
 });

@@ -160,7 +160,7 @@ let last = performance.now();
 function frame(now) {
   const dt = Math.min((now - last) / 1000, 0.1);
   last = now;
-  player.update(dt, input, world);
+  if (player.update(dt, input, world)) toasts.push('Speed boost ended');
   npcs.update(dt, player, inventory);
   items.update(player, inventory);
   toasts.update(dt);

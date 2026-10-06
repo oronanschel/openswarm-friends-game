@@ -26,22 +26,25 @@ const MARGIN = 12;
 const PAD = 8;
 const WIDTH = 250;
 
+const COMPACT_WIDTH = 140;
+
 // Recipe list at the top-left, in CSS pixels, with an optional `footer` line
-// (e.g. the friend count); all context state is restored.
-export function drawRecipes(ctx, inventory, dpr, footer = null) {
+// (e.g. the friend count); all context state is restored. `compact` (for
+// narrow windows) replaces the recipe lines with one short line per recipe.
+export function drawRecipes(ctx, inventory, dpr, footer = null, compact = false) {
   ctx.save();
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   const lines = Recipes.length + 1 + (footer ? 1 : 0);
   ctx.fillStyle = 'rgba(0, 0, 0, 0.55)';
-  ctx.fillRect(MARGIN, MARGIN, WIDTH, PAD * 2 + LINE * lines);
-  ctx.font = '13px sans-serif';
+  ctx.fillRect(MARGIN, MARGIN, compact ? COMPACT_WIDTH : WIDTH, PAD * 2 + LINE * lines);
+  ctx.font = compact ? '12px sans-serif' : '13px sans-serif';
   ctx.textAlign = 'left';
   ctx.textBaseline = 'top';
   ctx.fillStyle = '#fff';
   ctx.fillText('Craft', MARGIN + PAD, MARGIN + PAD);
   Recipes.forEach((recipe, i) => {
     const inputs = recipe.inputs.map(([type, n]) => n + ' ' + type.name).join(' + ');
-    const text = `[${i + 1}] ${recipe.output.name} = ${inputs}`;
+    const text = compact ? `[${i + 1}] ${recipe.output.name}` : `[${i + 1}] ${recipe.output.name} = ${inputs}`;
     ctx.globalAlpha = canCraft(inventory, recipe) ? 1 : 0.4;
     ctx.fillText(text, MARGIN + PAD, MARGIN + PAD + LINE * (i + 1));
   });

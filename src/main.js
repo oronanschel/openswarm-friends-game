@@ -121,7 +121,10 @@ function draw() {
   player.draw(ctx);
   minimap.draw(ctx, viewW, dpr, player, npcs.all, items.all);
   inventory.draw(ctx, viewH, dpr);
-  drawRecipes(ctx, inventory, dpr, 'Friends: ' + npcs.friends.size + '  (E to give a necklace)');
+  // Below this width the full recipe panel would run into the minimap.
+  const narrow = viewW < 460;
+  const friends = 'Friends: ' + npcs.friends.size + (narrow ? '' : ' (E: give necklace)');
+  drawRecipes(ctx, inventory, dpr, friends, narrow);
   toasts.draw(ctx, viewH, dpr);
 }
 

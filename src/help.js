@@ -9,6 +9,7 @@ export const HelpLines = [
   'Make a friend: E, with a Shell Necklace',
   'Eat Berry Jam: F, for a speed boost',
   'Mute: M      Dark mode: N',
+  'In the dark, zombies steal an item: run!',
   'Start over: Shift+R',
   'Goal: make 5 friends',
 ];

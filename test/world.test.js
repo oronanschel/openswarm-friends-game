@@ -37,6 +37,13 @@ test('spawn is walkable and not boxed in across seeds', () => {
   }
 });
 
+test('hasRoom with min 1 accepts an isolated walkable tile', () => {
+  const world = new World(1);
+  world.tileAt = (tx, ty) => (tx === 0 && ty === 0 ? Tiles.GRASS : Tiles.WATER);
+  assert.equal(world.hasRoom(0, 0, 1), true);
+  assert.equal(world.hasRoom(0, 0, 2), false);
+});
+
 test('player stops flush against a wall', () => {
   // Wall everywhere at tile x >= 1; open elsewhere.
   const world = { isSolid: (px) => Math.floor(px / TILE) >= 1 };

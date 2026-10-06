@@ -34,21 +34,31 @@ window.addEventListener('resize', resize);
 resize();
 
 function draw() {
-  const camX = Math.round(player.x - viewW / 2);
-  const camY = Math.round(player.y - viewH / 2);
-  ctx.setTransform(dpr, 0, 0, dpr, -camX * dpr, -camY * dpr);
+  // Camera in whole device pixels, so nothing lands between pixels.
+  const camXd = Math.round((player.x - viewW / 2) * dpr);
+  const camYd = Math.round((player.y - viewH / 2) * dpr);
+  const camX = camXd / dpr;
+  const camY = camYd / dpr;
 
+  // Terrain is drawn in device pixels with rounded edges: at fractional dpr,
+  // TILE * dpr is not whole and scaled fillRects would leave antialiased seams.
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
   const x0 = Math.floor(camX / TILE);
   const y0 = Math.floor(camY / TILE);
   const x1 = Math.ceil((camX + viewW) / TILE);
   const y1 = Math.ceil((camY + viewH) / TILE);
   for (let ty = y0; ty < y1; ty++) {
+    const top = Math.round(ty * TILE * dpr) - camYd;
+    const bottom = Math.round((ty + 1) * TILE * dpr) - camYd;
     for (let tx = x0; tx < x1; tx++) {
+      const left = Math.round(tx * TILE * dpr) - camXd;
+      const right = Math.round((tx + 1) * TILE * dpr) - camXd;
       ctx.fillStyle = world.tileAt(tx, ty).color;
-      ctx.fillRect(tx * TILE, ty * TILE, TILE, TILE);
+      ctx.fillRect(left, top, right - left, bottom - top);
     }
   }
 
+  ctx.setTransform(dpr, 0, 0, dpr, -camXd, -camYd);
   npcs.draw(ctx);
   player.draw(ctx);
   minimap.draw(ctx, viewW, dpr, player, npcs.all);

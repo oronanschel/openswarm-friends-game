@@ -17,6 +17,8 @@ python3 -m http.server 8000
 
 Move with WASD or the arrow keys. Water and trees block movement. Walk up to a villager to hear what they have to say. Walk over berries, stones and shells to collect them into the hotbar at the bottom-left.
 
+Progress (position, inventory and what you have picked up) is saved in the browser every few seconds and restored on the next visit. Press Shift+R to wipe the save and start over.
+
 ## Tests
 
 ```sh

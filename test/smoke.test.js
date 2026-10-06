@@ -54,6 +54,7 @@ async function boot(tag, { width, height, dpr, stored = {} }) {
   const frames = [];
   const intervals = [];
   let now = 0;
+  let reloads = 0;
 
   const window = {
     innerWidth: width,
@@ -64,7 +65,7 @@ async function boot(tag, { width, height, dpr, stored = {} }) {
       setItem: (key, value) => data.set(key, String(value)),
       removeItem: (key) => data.delete(key),
     },
-    location: { reload() {} },
+    location: { reload: () => reloads++ },
     addEventListener: on(listeners.window),
     dispatchEvent: (event) => fire(event.type, event),
   };
@@ -111,6 +112,7 @@ async function boot(tag, { width, height, dpr, stored = {} }) {
     },
     saved: () => JSON.parse(data.get(SAVE_KEY) || 'null'),
     stored: (key) => (data.has(key) ? data.get(key) : null),
+    reloads: () => reloads,
   };
 }
 
@@ -345,4 +347,55 @@ test('a save from another world is ignored and the game starts fresh', async () 
   broken.run(3);
   broken.fire('pagehide');
   assert.deepEqual(broken.saved().inventory, []);
+});
+
+test('browser shortcuts are left alone: only a plain Shift+R wipes the save', async () => {
+  const { JAM, BERRY } = ItemTypes;
+  const game = await boot('shortcuts', {
+    width: 800,
+    height: 600,
+    dpr: 1,
+    stored: { [SAVE_KEY]: JSON.stringify(stockedSave()) },
+  });
+  const count = (type) => new Map(game.saved().inventory).get(type.id) || 0;
+  game.run(2);
+  game.fire('pagehide');
+  const start = game.saved().player;
+
+  // The modifiers a browser shortcut carries, one at a time.
+  for (const modifier of ['ctrlKey', 'metaKey', 'altKey']) {
+    const held = { [modifier]: true };
+    // Hard reload: the save must survive it.
+    game.key('KeyR', { shiftKey: true, ...held });
+    assert.equal(game.reloads(), 0, modifier);
+    assert.ok(game.saved(), modifier);
+    // Find, switch tab, minimise, history, bookmark: no game action.
+    for (const code of ['KeyF', 'Digit3', 'KeyM', 'KeyH', 'KeyD']) game.key(code, held);
+    game.run(20);
+    for (const code of ['KeyF', 'Digit3', 'KeyM', 'KeyH', 'KeyD']) game.release(code);
+    game.fire('pagehide');
+    // No jam eaten, none crafted, no berries spent. (Berries can go up: a
+    // villager may wander over with a gift.)
+    assert.equal(count(JAM), 2, modifier);
+    assert.ok(count(BERRY) >= 4, modifier);
+    assert.equal(game.stored('friends-game-muted'), null, modifier);
+    // The first-visit help is still up: none of those presses closed it.
+    assert.equal(game.stored(HELP_KEY), null, modifier);
+    assert.deepEqual(game.saved().player, start, modifier);
+  }
+
+  // The same keys without a modifier do act.
+  game.key('KeyF');
+  game.release('KeyF');
+  game.fire('pagehide');
+  assert.equal(count(JAM), 1);
+  assert.equal(game.stored(HELP_KEY), '1');
+
+  // Shift alone is not a browser modifier here: Shift+R resets.
+  game.key('KeyR', { shiftKey: true });
+  assert.equal(game.reloads(), 1);
+  assert.equal(game.saved(), null);
+  // Nothing is saved again on the way out.
+  game.fire('pagehide');
+  assert.equal(game.saved(), null);
 });

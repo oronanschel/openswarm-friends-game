@@ -57,16 +57,22 @@ document.addEventListener('visibilitychange', () => {
 });
 
 const input = new Set();
-window.addEventListener('keydown', (e) => input.add(e.code));
+// Every key handler goes through this. A press with Ctrl, Cmd or Alt held is
+// a browser shortcut (Ctrl+F, Cmd+Shift+R, ...) and is left to the browser.
+const onKey = (handler) =>
+  window.addEventListener('keydown', (e) => {
+    if (!e.ctrlKey && !e.metaKey && !e.altKey) handler(e);
+  });
+onKey((e) => input.add(e.code));
 // Shift+R wipes the save and starts over.
-window.addEventListener('keydown', (e) => {
+onKey((e) => {
   if (e.code !== 'KeyR' || !e.shiftKey) return;
   resetting = true;
   clear(storage);
   window.location.reload();
 });
 // Space chops the nearest tree, once the player has crafted a stone axe.
-window.addEventListener('keydown', (e) => {
+onKey((e) => {
   if (e.code !== 'Space' || e.repeat) return;
   if (!chop(world, player, inventory, ItemTypes.STONE_AXE)) return;
   minimap.invalidate();
@@ -74,7 +80,7 @@ window.addEventListener('keydown', (e) => {
   sound.play('chop');
 });
 // Number keys craft the matching recipe.
-window.addEventListener('keydown', (e) => {
+onKey((e) => {
   const recipe = Recipes.find((r) => r.key === e.code);
   if (!recipe || e.repeat) return;
   if (alreadyHave(inventory, recipe)) {
@@ -86,7 +92,7 @@ window.addEventListener('keydown', (e) => {
   }
 });
 // F eats a Berry Jam for a burst of speed.
-window.addEventListener('keydown', (e) => {
+onKey((e) => {
   if (e.code !== 'KeyF' || e.repeat) return;
   if (player.eat(inventory, ItemTypes.JAM)) {
     toasts.push('Yum! Speed boost');
@@ -99,7 +105,7 @@ window.addEventListener('keydown', (e) => {
 window.addEventListener('keyup', (e) => input.delete(e.code));
 window.addEventListener('blur', () => input.clear());
 // E gives a Shell Necklace to the villager you are talking to, making a friend.
-window.addEventListener('keydown', (e) => {
+onKey((e) => {
   if (e.code !== 'KeyE' || e.repeat) return;
   const npc = npcs.talkingTo(player);
   if (!npc || npc.friend) return;
@@ -112,14 +118,14 @@ window.addEventListener('keydown', (e) => {
   }
 });
 // M mutes or unmutes the sound effects.
-window.addEventListener('keydown', (e) => {
+onKey((e) => {
   if (e.code !== 'KeyM' || e.repeat) return;
   toasts.push(sound.toggleMute() ? 'Sound off' : 'Sound on');
   sound.play('pickup');
 });
 // H shows or hides the help panel; any other key, or a tap, closes it. The
 // key still does its usual job.
-window.addEventListener('keydown', (e) => {
+onKey((e) => {
   if (e.code !== 'KeyH') help.dismiss();
   else if (!e.repeat) help.toggle();
 });
